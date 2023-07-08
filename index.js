@@ -1,5 +1,6 @@
 ﻿const express = require('express');
 const path = require('path');
+const backend = require('./studentManagement-backend/index.js')
 
 const app = express();
 const port = 80; // Choose the desired port number
@@ -8,7 +9,7 @@ const port = 80; // Choose the desired port number
 app.use(express.static(path.join(__dirname, 'studentManagement-frontend', 'build')));
 
 // Define additional routes or middleware if needed
-
+app.use('/api', backend);
 // Serve the index.html file for all other routes
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'studentManagement-frontend', 'build', 'index.html'));

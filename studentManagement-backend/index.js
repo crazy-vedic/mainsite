@@ -30,12 +30,9 @@ app.post('/api/login', async function(req, res) {
           const token = jsonwebtoken.sign({username, password}, secretKey, {expiresIn: "1h"});
           const doc = await adminList.findOne({username,password});
           if (doc) {
-            console.log({username, password});
-            console.log(doc);
             return res.status(200).json({token});
           } else {
             console.log({username, password});
-            console.log(doc)
             return res.status(403).json({message: "username not found" });
           }
         } catch (e) {
