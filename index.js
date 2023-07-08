@@ -11,7 +11,7 @@ const backendPort = 3001; // Port for running the backend server
 app.use(express.static(path.join(__dirname, 'studentManagement-frontend', 'build')));
 
 // Define additional routes or middleware if needed
-//app.use('/api', backend);
+app.use('/api', backend);
 
 // Serve the index.html file for all other routes
 app.get('*', (req, res) => {
@@ -32,6 +32,6 @@ mongoose.connect(mongoURL,
     }
 ).then(() => {
   console.log(`Connected to database studentDBMSDB`);
-  backend.listen(backendPort, () => {
+  app.listen(backendPort, () => {
   console.log(`Backend server is running on port ${backendPort}`);
 })});
