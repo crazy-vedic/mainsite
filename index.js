@@ -11,7 +11,7 @@ app.use(express.static(path.join(__dirname, 'build')));
 
 // Serve the index.html file for all other routes
 app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname,'test-app', 'build', 'index.html'));
+  res.sendFile(path.join(__dirname,'studentManagement-frontend', 'build', 'index.html'));
 });
 
 // Start the server
