@@ -1,40 +1,112 @@
 ﻿const express = require('express');
-const path = require('path');
-const backend = require('./studentManagement-backend/index.js');
-const mongoose = require('mongoose');
-const http = require('http');
 const cors = require('cors');
+const bodyParser = require('body-parser');
+const mongoose = require('mongoose');
+const adminList = require('./models/adminList')
+const studentlist = require('./models/studentList')
+const path = require('path');
+jsonwebtoken = require('jsonwebtoken');
 
-const frontendApp = express();
-const backendApp = express();
-frontendApp.use(cors());
-backendApp.use(cors());
-
-const frontendPort = 80; // Port for serving the frontend build
-const backendPort = 3001; // Port for running the backend server
+const app = express();
+const port = 80; // Choose the desired port number
+app.use(cors());
+app.use(bodyParser.json());
 
 // Serve static files from the 'build' folder
-frontendApp.use(express.static(path.join(__dirname, 'studentManagement-frontend', 'build')));
+app.use(express.static(path.join(__dirname, 'studentManagement-frontend', 'build')));
 
-// Serve the index.html file for all frontend routes
-frontendApp.get('*', (req, res) => {
+// Define additional routes or middleware if needed
+
+app.post('/api/login', async function(req, res) {
+  const { username, password } = req.body;
+        try {
+          const secretKey = "uwu lmao xd";
+          const token = jsonwebtoken.sign({username, password}, secretKey, {expiresIn: "1h"});
+          const doc = await adminList.findOne({username,password});
+          if (doc) {
+            return res.status(200).json({token});
+          } else {
+            console.log({username, password});
+            return res.status(403).json({message: "username not found" });
+          }
+        } catch (e) {
+          return res.status(500).json({message:e});
+        }
+      });
+
+app.post('/api/students/create',authenticateToken, async function(req, res) {
+      const { _id,name, joining, program, gpa, section} = req.body;
+      if (!_id || !name || !joining){
+        return res.status(400).json({message: "Please fill name and joining year"});
+      }
+      try {
+      var student = new studentlist({_id,name, joining, program, gpa, section});
+      console.log(student);
+      student.save();
+      res.status(200).json({message: "Student created successfully"});
+      } catch (e) {
+        console.log(e);
+        res.status(500).json({"message":e});
+      }
+    });
+
+app.put('/api/students/:id',authenticateToken, async function(req, res) {
+const studentId=req.params.id;
+const {name,gpa,section,joining,program} = req.body;
+try {
+  const updatedStudent = await studentlist.findByIdAndUpdate(studentId, {name,gpa,section,joining,program}, { new: true });
+  if (!updatedStudent) {
+    return res.status(400).json({message: "Student not found"});
+  }
+  console.log({name,gpa,section,joining,program});
+  return res.status(200).json({message: "Student updated successfully",student: updatedStudent});
+} catch (e) {
+  console.log(e);
+  res.status(500).json({message:e});
+}})
+
+app.delete('/api/students',authenticateToken, async function(req, res) {
+  try {
+    ids=Array.from(req.body);
+    if (Array.isArray(ids)==false) {
+      return res.status(400).json({message:"Incorrect input"});}
+    if (ids.length==0) {
+      return res.status(400).json({message: "Please select students to delete"});
+    }
+    studentlist.deleteMany({_id:{$in:ids}}).then(() => {
+      return res.status(200).json({message: `${ids} deleted successfully`});
+    })
+  } catch (e) {
+    res.status(500).json({message:e});
+    console.log(e);
+  }})
+
+app.post('/api/students/search',authenticateToken, async function(req, res) {
+        try {
+          var sort = req.body.sort || {};
+          var limit = req.body.limit || 10;
+          const students = await studentlist.find().sort(sort).limit(limit);
+          res.status(200).json(students);
+        } catch (e) {
+          res.status(500).json({message:e});
+        }});
+
+// Serve the index.html file for all other routes
+app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'studentManagement-frontend', 'build', 'index.html'));
 });
 
-// Mount the backend middleware
-backendApp.use('/api', backend);
-
-// Create the frontend and backend server instances
-const frontendServer = http.createServer(frontendApp);
-const backendServer = http.createServer(backendApp);
-
-// Start the frontend server
-frontendServer.listen(frontendPort, () => {
-  console.log(`Frontend server is running on port ${frontendPort}`);
+const mongoURL = `mongodb+srv://admin:pass@cluster0.tjfctuy.mongodb.net/studentDBMSDB?retryWrites=true&w=majority`;
+mongoose.connect(mongoURL,
+    {
+        useUnifiedTopology: true,
+        useNewUrlParser: true
+    }
+).then(() => {
+  console.log(`Connected to database studentDBMSDB`);
+  //app.listen(PORT, function() {console.log(`Server is running on port ${PORT}`)});
+}).catch((err) => {console.log(err);});
+// Start the server
+app.listen(port, () => {
+  console.log(`Server is running on port ${port}`);
 });
-
-// Start the backend server
-
-backendServer.listen(backendPort, () => {
-    console.log(`Backend server is running on port ${backendPort}`);
-  });

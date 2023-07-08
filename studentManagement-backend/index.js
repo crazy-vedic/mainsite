@@ -23,15 +23,6 @@ const authenticateToken = (req, res, next) => {
     next();
   });}
 
-app.post('/login', async function(req, res) {
-  const { username, password } = req.body;
-
-        try {return res.status(200).json({'message':'aa'});
-        }
-        catch(e) {
-          return res.status(500).json({message:e})};})
-          
-
 app.post('/api/login', async function(req, res) {
   const { username, password } = req.body;
         try {
