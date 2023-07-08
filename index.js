@@ -2,6 +2,7 @@
 const path = require('path');
 const backend = require('./studentManagement-backend/index.js');
 const mongoose = require('mongoose');
+const http = require('http');
 
 const app = express();
 const frontendPort = 80; // Port for serving the frontend build
@@ -18,20 +19,23 @@ app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'studentManagement-frontend', 'build', 'index.html'));
 });
 
+// Create the HTTP server instances
+const frontendServer = http.createServer(app);
+const backendServer = http.createServer(backend);
+
 // Start the server for serving the frontend build
-app.listen(frontendPort, () => {
+frontendServer.listen(frontendPort, () => {
   console.log(`Frontend server is running on port ${frontendPort}`);
 });
 
 // Start the backend server
-const mongoURL = `mongodb+srv://admin:pass@cluster0.tjfctuy.mongodb.net/studentDBMSDB?retryWrites=true&w=majority`;
-mongoose.connect(mongoURL,
-    {
-        useUnifiedTopology: true,
-        useNewUrlParser: true
-    }
-).then(() => {
-  console.log(`Connected to database studentDBMSDB`);
-  app.listen(backendPort, () => {
-  console.log(`Backend server is running on port ${backendPort}`);
-})});
+const mongoURL = 'mongodb+srv://admin:pass@cluster0.tjfctuy.mongodb.net/studentDBMSDB?retryWrites=true&w=majority';
+mongoose.connect(mongoURL, {
+  useUnifiedTopology: true,
+  useNewUrlParser: true,
+}).then(() => {
+  console.log('Connected to database studentDBMSDB');
+  backendServer.listen(backendPort, () => {
+    console.log(`Backend server is running on port ${backendPort}`);
+  });
+});
