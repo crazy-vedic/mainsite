@@ -8,7 +8,7 @@ jsonwebtoken = require('jsonwebtoken');
 
 
 var app = express();
-const PORT = 3001;
+const PORT = 80;
 
 
 app.use(cors());
