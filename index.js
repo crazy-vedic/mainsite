@@ -16,7 +16,15 @@ app.use(bodyParser.json());
 app.use(express.static(path.join(__dirname, 'studentManagement-frontend', 'build')));
 
 // Define additional routes or middleware if needed
-
+const authenticateToken = (req, res, next) => {
+  const token = req.headers['authorization'];
+  if (token == null) return res.sendStatus(401);
+  jsonwebtoken.verify(token, "uwu lmao xd", (err, user) => {
+    if (err) return res.sendStatus(403);
+    req.user = user;
+    next();
+  });}
+  
 app.post('/api/login', async function(req, res) {
   const { username, password } = req.body;
         try {
