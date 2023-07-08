@@ -7,7 +7,7 @@ import { Link } from 'react-router-dom';
 
 
 function Dashboard() {
-  const BACKENDSERVER = "http://43.204.147.14:443";
+  const BACKENDSERVER = "https://43.204.147.14:443";
   const toasty =  {position: "top-right",autoClose: 5000,hideProgressBar: false,closeOnClick: true,draggable: true,progress: undefined,theme: "colored",}
   var token = localStorage.getItem('token');
   const [students, setStudents] = useState([]);
