@@ -106,7 +106,7 @@ mongoose.connect(mongoURL,
     }
 ).then(() => {
   console.log(`Connected to database studentDBMSDB`);
-  app.listen(PORT, function() {console.log(`Server is running on port ${PORT}`)});
+  //app.listen(PORT, function() {console.log(`Server is running on port ${PORT}`)});
 })
 
 module.exports = app;
