@@ -5,12 +5,19 @@ const mongoose = require('mongoose');
 const adminList = require('./models/adminList')
 const studentlist = require('./models/studentList')
 const path = require('path');
+const fs = require('fs');
 jsonwebtoken = require('jsonwebtoken');
 
 const app = express();
-const port = 80; // Choose the desired port number
+const port = 443; // Choose the desired port number
 app.use(cors());
 app.use(bodyParser.json());
+/*[Sat Jul  8 14:27:34 UTC 2023] Your cert is in: /root/.acme.sh/vedicvarma.com_ecc/vedicvarma.com.cer
+[Sat Jul  8 14:27:34 UTC 2023] Your cert key is in: /root/.acme.sh/vedicvarma.com_ecc/vedicvarma.com.key*/
+const options = {
+  key: fs.readFileSync('/root/.acme.sh/vedicvarma.com_ecc/vedicvarma.com.key'),
+  cert: fs.readFileSync('/root/.acme.sh/vedicvarma.com_ecc/vedicvarma.com.cer'),
+};
 
 // Serve static files from the 'build' folder
 app.use(express.static(path.join(__dirname, 'studentManagement-frontend', 'build')));
@@ -108,6 +115,8 @@ app.get('/', (req, res) => {
 app.get('*', (req, res) => {
   console.log(req.url);})
 
+const server = https.createServer(options, app);
+
 const mongoURL = `mongodb+srv://admin:pass@cluster0.tjfctuy.mongodb.net/studentDBMSDB?retryWrites=true&w=majority`;
 mongoose.connect(mongoURL,
     {
@@ -119,6 +128,6 @@ mongoose.connect(mongoURL,
   //app.listen(PORT, function() {console.log(`Server is running on port ${PORT}`)});
 }).catch((err) => {console.log(err);});
 // Start the server
-app.listen(port, () => {
+server.listen(port, () => {
   console.log(`Server is running on port ${port}`);
 });
