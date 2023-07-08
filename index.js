@@ -34,13 +34,7 @@ frontendServer.listen(frontendPort, () => {
 });
 
 // Start the backend server
-const mongoURL = 'mongodb+srv://admin:pass@cluster0.tjfctuy.mongodb.net/studentDBMSDB?retryWrites=true&w=majority';
-mongoose.connect(mongoURL, {
-  useUnifiedTopology: true,
-  useNewUrlParser: true,
-}).then(() => {
-  console.log('Connected to database studentDBMSDB');
-  backendServer.listen(backendPort, () => {
+
+backendServer.listen(backendPort, () => {
     console.log(`Backend server is running on port ${backendPort}`);
   });
-});
