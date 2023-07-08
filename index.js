@@ -1,21 +1,28 @@
 ﻿const express = require('express');
 const path = require('path');
-const backend = require('./studentManagement-backend/index.js')
+const backend = require('./studentManagement-backend/index.js');
 
 const app = express();
-const port = 80; // Choose the desired port number
+const frontendPort = 80; // Port for serving the frontend build
+const backendPort = 3001; // Port for running the backend server
 
 // Serve static files from the 'build' folder
 app.use(express.static(path.join(__dirname, 'studentManagement-frontend', 'build')));
 
 // Define additional routes or middleware if needed
 app.use('/api', backend);
+
 // Serve the index.html file for all other routes
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'studentManagement-frontend', 'build', 'index.html'));
 });
 
-// Start the server
-app.listen(port, () => {
-  console.log(`Server is running on port ${port}`);
+// Start the server for serving the frontend build
+app.listen(frontendPort, () => {
+  console.log(`Frontend server is running on port ${frontendPort}`);
+});
+
+// Start the backend server
+backend.listen(backendPort, () => {
+  console.log(`Backend server is running on port ${backendPort}`);
 });
