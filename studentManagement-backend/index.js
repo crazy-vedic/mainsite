@@ -105,7 +105,7 @@ app.post('/api/students/search',authenticateToken, async function(req, res) {
         } catch (e) {
           res.status(500).json({message:e});
         }});
-
+/*
 // Connection URL
 const mongoURL = `mongodb+srv://admin:pass@cluster0.tjfctuy.mongodb.net/studentDBMSDB?retryWrites=true&w=majority`;
 mongoose.connect(mongoURL,
@@ -117,5 +117,5 @@ mongoose.connect(mongoURL,
   console.log(`Connected to database studentDBMSDB`);
   //app.listen(PORT, function() {console.log(`Server is running on port ${PORT}`)});
 })
-
+*/
 module.exports = app;
