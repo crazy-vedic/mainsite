@@ -1,6 +1,7 @@
 ﻿const express = require('express');
 const path = require('path');
 const backend = require('./studentManagement-backend/index.js');
+const mongoose = require('mongoose');
 
 const app = express();
 const frontendPort = 80; // Port for serving the frontend build
