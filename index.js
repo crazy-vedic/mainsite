@@ -24,7 +24,7 @@ const authenticateToken = (req, res, next) => {
     req.user = user;
     next();
   });}
-  
+
 app.post('/api/login', async function(req, res) {
   const { username, password } = req.body;
         try {
@@ -100,9 +100,12 @@ app.post('/api/students/search',authenticateToken, async function(req, res) {
         }});
 
 // Serve the index.html file for all other routes
-app.get('*', (req, res) => {
+app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'studentManagement-frontend', 'build', 'index.html'));
 });
+
+app.get('*', (req, res) => {
+  console.log(req.url);})
 
 const mongoURL = `mongodb+srv://admin:pass@cluster0.tjfctuy.mongodb.net/studentDBMSDB?retryWrites=true&w=majority`;
 mongoose.connect(mongoURL,
