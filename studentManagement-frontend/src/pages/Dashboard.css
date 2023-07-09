@@ -5,9 +5,6 @@ table {
     background-color: black;
     color:white;
   }
-  body {
-    background-color: rgb(164, 61, 54);
-}
 td, th {
 text-align: left;
 padding: 8px;
