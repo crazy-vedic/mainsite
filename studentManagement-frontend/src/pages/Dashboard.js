@@ -134,7 +134,7 @@ var index;
         fetch(`${BACKENDSERVER}/api/students`, {method: 'DELETE', headers: { 'Content-Type': 'application/json',
     'Authorization':`${token}` }, body: JSON.stringify(checkedStudents.map((student) => student._id))})
         .then(res => res.json())
-        .then(data => console.log(data))
+        .then(data => {return toast.success(data.message,toasty);})
         .catch(err => console.log(err))
         fetchStudents();
       }}>Delete Checked Students</button>
@@ -148,11 +148,10 @@ var index;
               <button
                 id="addStudentToDB"
                 className="editStudent"
-                onClick={(event) => addStudentToDB(event)}
-              >
+                onClick={(event) => {addStudentToDB(event);document.getElementById("removeAddStudent").click();}}>
                 <img src={require("../components/check.png")} alt="check add student" />
               </button>
-              <button className="editStudent" onClick={() => clearAddData()}>
+              <button id="removeAddStudent" className="editStudent" onClick={() => clearAddData()}>
                 <img src={require("../components/cancel.png")} alt="cancel add student" />
               </button>
             </div>
@@ -198,7 +197,7 @@ var index;
               onChange={(event) => handleAddStudent(event)}
             ></input>
           </td>
-          <td className="w3">
+          <td className="w6">
             <input
               className="add-student"
               id="section"
