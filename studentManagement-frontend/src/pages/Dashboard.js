@@ -39,7 +39,7 @@ function Dashboard() {
         return tempstudent;})}))
       .catch(err => {
         if (response.status===403) {
-          toast.error(`${response.status} :\nPlease login again from the login page.`,toasty);
+          toast.error(`Unauthorized :\n${<Link to="/">Please login again from the login page.</Link>}`,toasty);
         }else{
         toast.error(`${response.status} : ${err}`,toasty);
         console.log(err);}});
@@ -126,7 +126,7 @@ var index;
     <div id="dashboard-root">
       {/*<button onClick={() => toast.warn("etouhetotusehiesu",toasty)}>toasty pls</button>*/}
       <ToastContainer />
-      <Link to={"/"}><h1>Student Dashboard</h1></Link>
+      <h1>Student Dashboard</h1>
       <button id="add-student-btn" onClick={() => {if (!addStudent.show) {getLastId();};setAddStudent(prevState=>({...prevState,'show':!addStudent.show}));}}>{addStudent.show?"Close Menu":"Add Student"}</button>
       <button id="delete-students" onClick={() => {
         const checkedStudents = students.filter((student) => student.checked)
