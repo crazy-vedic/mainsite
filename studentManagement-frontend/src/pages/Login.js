@@ -37,7 +37,7 @@ function Login() {
       body= data;
       if (status === 200) {
         localStorage.setItem('token', body.token);
-        navigate('/dashboard');//Naviages to the /dashboard page
+        navigate('/projects/studentManagement/dashboard');//Naviages to the /dashboard page
       }
       else {
           console.log(body);
