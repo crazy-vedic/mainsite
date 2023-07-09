@@ -107,16 +107,10 @@ function Dashboard() {
       return res.json();})
     .then(body => {
       if (response.status === 200) {
-        addbtn.textContent = body.message;
         toast.success(body.message,toasty)
         clearAddData();
-        setTimeout(() => {addbtn.textContent="Close Menu"}, 2000)
       } else {
         toast.error(body.message,toasty)
-        addbtn.style.backgroundColor = "red";
-        addbtn.textContent = body.message;
-        setTimeout(() => {addbtn.textContent="Close Menu";
-      addbtn.style.backgroundColor="green"}, 2000)
   }
     fetchStudents();}).catch(err => console.log(err))
 
