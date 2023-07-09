@@ -124,11 +124,15 @@ var index;
       <button id="add-student-btn" onClick={() => {if (!addStudent.show) {getLastId();};setAddStudent(prevState=>({...prevState,'show':!addStudent.show}));}}>{addStudent.show?"Close Menu":"Add Student"}</button>
       <button id="delete-students" onClick={() => {
         const checkedStudents = students.filter((student) => student.checked)
-        console.log(checkedStudents)
+        var response;
         fetch(`${BACKENDSERVER}/api/students`, {method: 'DELETE', headers: { 'Content-Type': 'application/json',
     'Authorization':`${token}` }, body: JSON.stringify(checkedStudents.map((student) => student._id))})
-        .then(res => res.json())
-        .then(data => {return toast.success(data.message,toasty);})
+        .then(res => {response = res;
+          res.json();})
+        .then(data => {
+          if (response.status===200) {
+          return toast.success(data.message,toasty);}
+          else{toast.warning(data.message,toasty);}})
         .catch(err => console.log(err))
         fetchStudents();
       }}>Delete Checked Students</button>
