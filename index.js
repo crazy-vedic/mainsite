@@ -75,7 +75,7 @@ try {
     return res.status(400).json({message: "Student not found"});
   }
   console.log({name,gpa,section,joining,program});
-  return res.status(200).json({message: "Student updated successfully",student: updatedStudent});
+  return res.status(200).json({message: `${studentId} student updated successfully`,student: updatedStudent});
 } catch (e) {
   console.log(e);
   res.status(500).json({message:e});
