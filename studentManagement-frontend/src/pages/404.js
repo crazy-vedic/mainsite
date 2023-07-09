@@ -5,7 +5,7 @@ function No404Page() {
   return (
     <>
       <h1>Unknown page, please login again</h1>
-      <Link to="/login"><h1>Login</h1></Link>
+      <Link to="/"><h1>Login</h1></Link>
     </>
   )
 }
