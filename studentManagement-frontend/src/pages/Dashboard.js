@@ -128,7 +128,7 @@ var index;
         fetch(`${BACKENDSERVER}/api/students`, {method: 'DELETE', headers: { 'Content-Type': 'application/json',
     'Authorization':`${token}` }, body: JSON.stringify(checkedStudents.map((student) => student._id))})
         .then(res => {response = res;
-          res.json();})
+          return res.json();})
         .then(data => {
           if (response.status===200) {
           return toast.success(data.message,toasty);}
