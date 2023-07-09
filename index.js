@@ -8,6 +8,7 @@ const path = require('path');
 const fs = require('fs');
 const https = require('https');
 jsonwebtoken = require('jsonwebtoken');
+require('dotenv').config();
 
 const app = express();
 const port = 443; // Choose the desired port number
@@ -120,7 +121,7 @@ app.get('*', (req, res) => {
 
 const server = https.createServer(options, app);
 
-const mongoURL = `mongodb+srv://admin:pass@cluster0.tjfctuy.mongodb.net/studentDBMSDB?retryWrites=true&w=majority`;
+const mongoURL = process.env.MONGO_URL
 mongoose.connect(mongoURL,
     {
         useUnifiedTopology: true,
