@@ -9,10 +9,10 @@ function App() {
   const location = useLocation();
   return (
     <Routes>
-      <Route path="/" element={<Login />} />
-      <Route path="*" element={<Navigate to="/404" state={{ from: location.pathname }} />}/>
-      <Route path="/404" element={<No404Page />} />
-      <Route path="/dashboard" element={<Dashboard />} />
+      <Route path='/projects/studentManagement' element={<Login />} />
+      <Route path='/projects/studentManagement/404' element={<No404Page />} />
+      <Route path='/projects/studentManagement/dashboard' element={<Dashboard />} />
+      <Route path='/projects/studentManagement/*' element={<Navigate to="/404" state={{ from: location.pathname }} />}/>
     </Routes>
   );
 }

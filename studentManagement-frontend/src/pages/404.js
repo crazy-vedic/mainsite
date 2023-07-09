@@ -5,7 +5,7 @@ function No404Page() {
   return (
     <>
       <h1>Unknown page, please login again</h1>
-      <Link to="/" className="home-button"><h2>Home</h2></Link>    </>
+      <Link to='/projects/studentManagement' className="home-button"><h2>Home</h2></Link>    </>
   )
 }
 

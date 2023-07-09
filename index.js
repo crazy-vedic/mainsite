@@ -108,13 +108,14 @@ app.post('/api/students/search',authenticateToken, async function(req, res) {
         }});
 
 app.use('/.well-known/acme-challenge', express.static(path.join(__dirname, '.well-known/acme-challenge')));
+
 // Serve the index.html file for all other routes
 app.get('/projects/studentManagement', (req, res) => {
   res.sendFile(path.join(__dirname, 'studentManagement-frontend', 'build', 'index.html'));
 });
 
 app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, 'studentManagement-frontend', 'build', 'index.html'));
+  //res.sendFile(path.join(__dirname, 'studentManagement-frontend', 'build', 'index.html'));
   console.log(req.url);})
 
 const server = https.createServer(options, app);

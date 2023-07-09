@@ -39,7 +39,7 @@ function Dashboard() {
         return tempstudent;})}))
       .catch(err => {
         if (response.status===403) {
-          toast.error(`Unauthorized :\n${<Link to="/">Please login again from the login page.</Link>}`,toasty);
+          toast.error(`Unauthorized :\n${<Link to="'/projects/studentManagement'">Please login again from the login page.</Link>}`,toasty);
         }else{
         toast.error(`${response.status} : ${err}`,toasty);
         console.log(err);}});
