@@ -14,11 +14,13 @@ const app = express();
 const port = 443; // Choose the desired port number
 app.use(cors());
 app.use(bodyParser.json());
-/*[Sat Jul  8 14:27:34 UTC 2023] Your cert is in: /root/.acme.sh/vedicvarma.com_ecc/vedicvarma.com.cer
-[Sat Jul  8 14:27:34 UTC 2023] Your cert key is in: /root/.acme.sh/vedicvarma.com_ecc/vedicvarma.com.key*/
+/*[Wed Aug  2 04:20:01 UTC 2023] Your cert is in: /root/.acme.sh/vedicvarma.com_ecc/vedicvarma.com.cer
+[Wed Aug  2 04:20:01 UTC 2023] Your cert key is in: /root/.acme.sh/vedicvarma.com_ecc/vedicvarma.com.key
+[Wed Aug  2 04:20:01 UTC 2023] The intermediate CA cert is in: /root/.acme.sh/vedicvarma.com_ecc/ca.cer
+[Wed Aug  2 04:20:01 UTC 2023] And the full chain certs is there: /root/.acme.sh/vedicvarma.com_ecc/fullchain.cer*/
 const options = {
-  key: fs.readFileSync('/root/.acme.sh/vedicvarma.com_ecc/vedicvarma.com.key'),
-  cert: fs.readFileSync('/root/.acme.sh/vedicvarma.com_ecc/vedicvarma.com.cer'),
+  key: fs.readFileSync('/var/www/certs/vedicvarma.com.key'),
+  cert: fs.readFileSync('/var/www/certs/vedicvarma.com.cer'),
 };
 
 // Serve static files from the 'build' folder
