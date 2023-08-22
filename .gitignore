@@ -1,3 +1,4 @@
 /studentManagement-frontend/build
 /studentManagement-frontend/.cache
+/studentManagement-frontend/node_modules
 .env

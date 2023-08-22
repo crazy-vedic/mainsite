@@ -1,0 +1,167 @@
+ <!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rock Paper Scissors</title>
+</head>
+
+<style>
+body {
+    background-color: black;
+    color: white;
+}
+
+div#player-buttons>button {
+    background: transparent;
+    background-color: transparent;
+    border-radius: 75px;
+    border-width:5px;
+    border-color: white;
+    max-width:150px;
+    max-height:150px;
+}
+
+div#player-buttons>button>img {
+    padding:20px;
+    max-width:75px;
+    max-height:75px;
+}
+div.buttons>button {
+    padding:7px
+}
+
+</style>
+
+<body>
+    <h1>Rock Paper Scissors</h1><br><br>
+    <div id="player-buttons">
+    <button><img class="player-button" id="rock" src="imgs/rock-emoji.png"></button>
+    <button><img class="player-button" id="paper" src="imgs/paper-emoji.png"></button>
+    <button><img class="player-button" id="scissors" src="imgs/scissors-emoji.png"></button>
+    </div>
+    <br><br>
+    <p id="win-condition"></p>
+    <span class="score"></span><br><br>
+    <div class="buttons"><button class="reset-score">Reset Score</button>
+    <button class="auto-play">Auto Play</button></div>
+<script>
+let score = JSON.parse(localStorage.getItem('score')) || {'wins':0,'losses':0,'ties':0};
+let span_score = document.querySelector('span.score')
+let reset_score = document.querySelector('button.reset-score');
+reset_score.addEventListener('click',() => {
+    score={wins:0,losses:0,ties:0};
+    localStorage.setItem('score',JSON.stringify(score));
+    updateScore();
+    show();
+    })
+span_score.innerHTML = `Wins: ${score.wins}, Losses: ${score.losses}, Ties: ${score.ties}`
+//document.querySelectorAll('div#player-buttons>button>img.player-button').forEach((element) => element.addEventListener('click',() => playGame(element.id)))
+document.querySelector('div#player-buttons').addEventListener('click',(event) => playGame(event.target.id))
+
+let autoP_interval = null;
+let autoPlayOBJ = document.querySelector('button.auto-play');
+autoPlayOBJ.addEventListener('click',debounce(autoPlay,100));
+
+function autoPlay() {
+    if (autoP_interval===null) {
+    autoP_interval = setInterval(() => {
+        playGame(generateMove());
+    }, 100);
+    autoPlayOBJ.innerHTML = 'Playing 🔄'}
+
+    else {
+        clearInterval(autoP_interval);
+        autoP_interval=null;
+        autoPlayOBJ.innerHTML='Auto Play';
+    }
+}
+
+function debounce(func,delay) {
+    let timerId;
+    return function (...args) {
+        clearTimeout(timerId);
+        timerId=setTimeout(() => func(...args),delay);
+    }
+}
+
+function generateMove() {
+    const arr = ['rock','paper','scissors'];
+    let choice = Math.round(Math.random()*arr.length);
+    return arr[choice];}
+
+function updateScore() {
+    let scoreOBJ = document.querySelector('span.score');
+    scoreOBJ.innerHTML = `Wins: ${score.wins}, Losses: ${score.losses}, Ties: ${score.ties}`
+    //console.log(`saving score: ${score}`);
+    localStorage.setItem('score',JSON.stringify(score));
+}
+
+function show(result) {
+    resultOBJ = document.querySelector('p#win-condition');
+    if (result === 'win') {
+        resultOBJ.innerHTML = 'YOU WIN!';
+    } else if (result ==='lose') {
+        resultOBJ.innerHTML = 'YOU LOSE!';
+    } else if (result==='tie') 
+    {resultOBJ.innerHTML = 'YOU TIED!';}
+    else {resultOBJ.innerHTML='';}
+    resultOBJ.style = result === "win"? 'color: green;' : result === 'lose'? 'color: red;':'color:white;';
+}
+
+function playGame(move) {
+    computerMove = generateMove();
+    //console.log(`Play Game: ${move} vs ${computerMove}`);
+    if (move==='rock') {
+        switch (computerMove) {
+            case 'rock':
+                score.ties++;
+                show('tie');
+                break;
+            case 'paper':
+                score.losses++;
+                show('lose');
+                break
+            case 'scissors':
+                score.wins++;
+                show('win');
+                break
+        }
+    } else if (move==='paper') {
+        switch (computerMove) {
+            case 'rock':
+                score.wins++;
+                show('win');
+                break;
+            case 'paper':
+                score.ties++;
+                show('tie');
+                break
+            case 'scissors':
+                score.losses++;
+                show('lose');
+                break
+        }
+    } else if (move==='scissors') {
+        switch (computerMove) {
+            case 'rock':
+                score.losses++;
+                show('lose');
+                break;
+            case 'paper':
+                score.wins++;
+                show('win');
+                break
+            case 'scissors':
+                score.ties++;
+                show('tie');
+                break
+        }  
+    }
+    updateScore();
+}
+
+</script>
+</body>
+</html>
