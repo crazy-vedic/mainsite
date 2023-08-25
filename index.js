@@ -21,7 +21,7 @@ app.use(bodyParser.json());
 [Wed Aug  2 04:20:01 UTC 2023] Your cert key is in: /root/.acme.sh/vedicvarma.com_ecc/vedicvarma.com.key
 [Wed Aug  2 04:20:01 UTC 2023] The intermediate CA cert is in: /root/.acme.sh/vedicvarma.com_ecc/ca.cer
 [Wed Aug  2 04:20:01 UTC 2023] And the full chain certs is there: /root/.acme.sh/vedicvarma.com_ecc/fullchain.cer*/
-if (!dev) {var options = {
+if (false) {var options = {
   key: fs.readFileSync('/var/www/certs/vedicvarma.com.key'),
   cert: fs.readFileSync('/var/www/certs/vedicvarma.com.cer'),
 };}
@@ -50,7 +50,7 @@ app.get('*', (req, res) => {
   res.send("Hello World");
   console.log(req.url);})
 
-if (dev) {var server = http.createServer(app);
+if (true) {var server = http.createServer(app);
 } else {var server = https.createServer(options, app);}
 
 
