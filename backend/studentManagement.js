@@ -12,7 +12,7 @@ Router.use(cors());
 Router.use(bodyParser.json());
 
 
-Router.post('/login', async function(req, res) {
+Router.post('/students/login', async function(req, res) {
   const { username, password } = req.body;
   try {
           const secretKey = "uwu lmao xd";
@@ -39,7 +39,7 @@ const authenticateToken = (req, res, next) => {
     next();
   });}
       
-  Router.post('/create',authenticateToken, async function(req, res) {
+  Router.post('/students/create',authenticateToken, async function(req, res) {
     const { _id,name, joining, program, gpa, section} = req.body;
     if (!_id || !name || !joining){
       return res.status(400).json({message: "Please fill name and joining year"});
@@ -86,7 +86,7 @@ Router.delete('/students',authenticateToken, async function(req, res) {
     console.log(e);
   }})
 
-Router.post('/search',authenticateToken, async function(req, res) {
+Router.post('/students/search',authenticateToken, async function(req, res) {
         try {
           var sort = req.body.sort || {};
           var limit = req.body.limit || 10;

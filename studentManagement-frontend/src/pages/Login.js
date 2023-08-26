@@ -31,7 +31,7 @@ function Login() {
     e.preventDefault()
     //console.log(input)
     var status,body;
-    var response = fetch(`${BACKENDSERVER}/api/login`, {method: 'POST', body: JSON.stringify(input), headers: {'Content-Type': 'application/json'}})
+    var response = fetch(`${BACKENDSERVER}/api/students/login`, {method: 'POST', body: JSON.stringify(input), headers: {'Content-Type': 'application/json'}})
     response.then(res => res.json().then(data => {
       status= res.status;
       body= data;
