@@ -37,7 +37,7 @@ app.get('/',(req,res) => {
 app.use('/home',express.static(path.join(__dirname,"home")));
 
 //Serive backend student managements files
-app.use('/api/students', require('./backend/studentManagement'));
+app.use('/api', require('./backend/studentManagement'));
 //Serve static student management files
 app.use(express.static(path.join(__dirname, 'studentManagement-frontend', 'build')));
 

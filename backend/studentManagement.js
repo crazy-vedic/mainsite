@@ -11,19 +11,10 @@ const Router = express.Router();
 Router.use(cors());
 Router.use(bodyParser.json());
 
-// Define additional routes or middleware if needed
-const authenticateToken = (req, res, next) => {
-  const token = req.headers['authorization'];
-  if (token == null) return res.sendStatus(401);
-  jsonwebtoken.verify(token, "uwu lmao xd", (err, user) => {
-    if (err) return res.sendStatus(403);
-    req.user = user;
-    next();
-  });}
 
 Router.post('/login', async function(req, res) {
   const { username, password } = req.body;
-        try {
+  try {
           const secretKey = "uwu lmao xd";
           const token = jsonwebtoken.sign({username, password}, secretKey, {expiresIn: "1h"});
           const doc = await adminList.findOne({username,password});
@@ -38,21 +29,31 @@ Router.post('/login', async function(req, res) {
         }
       });
 
-Router.post('/create',authenticateToken, async function(req, res) {
-      const { _id,name, joining, program, gpa, section} = req.body;
-      if (!_id || !name || !joining){
-        return res.status(400).json({message: "Please fill name and joining year"});
-      }
-      try {
-      var student = new studentlist({_id,name, joining, program, gpa, section});
-      console.log(student);
-      student.save();
-      res.status(200).json({message: "Student created successfully"});
-      } catch (e) {
-        console.log(e);
-        res.status(500).json({"message":e});
-      }
-    });
+// Define additional routes or middleware if needed
+const authenticateToken = (req, res, next) => {
+  const token = req.headers['authorization'];
+  if (token == null) return res.sendStatus(401);
+  jsonwebtoken.verify(token, "uwu lmao xd", (err, user) => {
+    if (err) return res.sendStatus(403);
+    req.user = user;
+    next();
+  });}
+      
+  Router.post('/create',authenticateToken, async function(req, res) {
+    const { _id,name, joining, program, gpa, section} = req.body;
+    if (!_id || !name || !joining){
+      return res.status(400).json({message: "Please fill name and joining year"});
+    }
+    try {
+  var student = new studentlist({_id,name, joining, program, gpa, section});
+  console.log(student);
+  student.save();
+  res.status(200).json({message: "Student created successfully"});
+  } catch (e) {
+    console.log(e);
+    res.status(500).json({"message":e});
+  }
+});
 
 Router.put('/students/:id',authenticateToken, async function(req, res) {
 const studentId=req.params.id;
