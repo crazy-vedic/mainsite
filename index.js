@@ -34,8 +34,6 @@ app.get('/',(req,res) => {
   res.sendFile(path.join(__dirname,"home","index.html"));
 })
 
-app.use('/home',express.static(path.join(__dirname,"home")));
-
 //Serive backend student managements files
 app.use('/api', require('./backend/studentManagement'));
 //Serve static student management files
@@ -44,6 +42,13 @@ app.use(express.static(path.join(__dirname, 'studentManagement-frontend', 'build
 app.get('/projects/studentManagement', (req, res) => {
   res.sendFile(path.join(__dirname, 'studentManagement-frontend', 'build', 'index.html'));
 });
+
+
+//project naithani
+app.use('/api/naithani', require('./project-Naithani/backend'));
+app.use(express.static(path.join(__dirname, 'project-Naithani', 'build')));
+app.get('/projects/naithani', (req, res) => {
+  res.sendFile(path.join(__dirname, 'project-Naithani', 'build', 'index.html'));});
 
 //All routes that weren't found
 app.get('*', (req, res) => {
