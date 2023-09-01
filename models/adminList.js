@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const connection = require('./../backend/mongoose');
 
 const adminListSchema = new mongoose.Schema({
         username: {
@@ -9,4 +10,5 @@ const adminListSchema = new mongoose.Schema({
                     },
                 })
 
-module.exports = mongoose.model('adminList', adminListSchema)
+const model = connection.model('adminList', adminListSchema);
+module.exports = model;

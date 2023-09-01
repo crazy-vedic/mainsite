@@ -1,5 +1,6 @@
 const { Int32, Double, Decimal128 } = require('mongodb');
 const mongoose = require('mongoose');
+const connection = require('./../backend/mongoose');
 
 const studentListSchema = new mongoose.Schema({
         _id: {
@@ -22,4 +23,5 @@ const studentListSchema = new mongoose.Schema({
         }
                 })
 
-module.exports = mongoose.model('studentlists', studentListSchema)
+const model = connection.model('studentlists', studentListSchema);
+module.exports = model;

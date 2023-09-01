@@ -96,15 +96,6 @@ Router.post('/students/search',authenticateToken, async function(req, res) {
           res.status(500).json({message:e});
         }});
 
-const mongoURL = process.env.MONGO_URL
-mongoose.connect(mongoURL,
-    {
-        useUnifiedTopology: true,
-        useNewUrlParser: true
-    }
-).then(() => {
-  console.log(`Connected to database studentDBMSDB`);
-  //Router.listen(PORT, function() {console.log(`Server is running on port ${PORT}`)}
-}).catch((err) => {console.log(err);});
 
+const dbConnection = require('./mongoose');
 module.exports = Router;
