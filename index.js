@@ -1,9 +1,6 @@
 ﻿const express = require('express');
 const cors = require('cors');
 const bodyParser = require('body-parser');
-const mongoose = require('mongoose');
-const adminList = require('./models/adminList')
-const studentlist = require('./models/studentList')
 const path = require('path');
 const fs = require('fs');
 const https = require('https');
@@ -33,20 +30,23 @@ app.use('/.well-known/acme-challenge', express.static(path.join(__dirname, '.wel
 app.get('/',(req,res) => {
   res.sendFile(path.join(__dirname,"home","index.html"));
 })
+app.use('/home', express.static(path.join(__dirname, 'home')));
 
-//Serive backend student managements files
-app.use('/api', require('./backend/studentManagement'));
+//Backend files
+app.use('/api/students', require('./backend/studentManagement'));
+app.use('/api/naithani', require('./project-Naithani/backend'));
+
+//project naithani
+app.use(express.static(path.join(__dirname, 'project-Naithani', 'build')));
+app.get('/projects/naithani', (req, res) => {
+  res.sendFile(path.join(__dirname, 'project-Naithani', 'build', 'index.html'));
+});
+
+//Serve student managements files
 app.use(express.static(path.join(__dirname, 'studentManagement-frontend', 'build')));
 app.get('/projects/studentManagement', (req, res) => {
   res.sendFile(path.join(__dirname, 'studentManagement-frontend', 'build', 'index.html'));
 });
-
-
-//project naithani
-app.use('/api/naithani', require('./project-Naithani/backend'));
-app.use(express.static(path.join(__dirname, 'project-Naithani', 'build')));
-app.get('/projects/naithani', (req, res) => {
-  res.sendFile(path.join(__dirname, 'project-Naithani', 'build', 'index.html'));});
 
 //All routes that weren't found
 app.get('*', (req, res) => {
