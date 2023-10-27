@@ -26,34 +26,19 @@ if (false) {var options = {
 //Serving https certificate
 app.use('/.well-known/acme-challenge', express.static(path.join(__dirname, '.well-known/acme-challenge')));
 
-// Serve the index.html
-app.get('/',(req,res) => {
-  res.sendFile(path.join(__dirname,"home","index.html"));
-})
-app.use('/home', express.static(path.join(__dirname, 'home')));
-
 //Backend files
 app.use('/api/students', require('./backend/studentManagement'));
-app.use('/api/naithani', require('./project-Naithani/backend'));
-
-//project naithani
-console.log(path.join(__dirname, 'project-Naithani', 'build'));
-app.use(express.static(path.join(__dirname, 'project-Naithani', 'build')));
-app.get('/projects/naithani', (req, res) => {
-  res.sendFile(path.join(__dirname, 'project-Naithani', 'build', 'index.html'));
-});
 
 //Serve student managements files
-console.log(path.join(__dirname, 'studentManagement-frontend', 'build'));
-app.use(express.static(path.join(__dirname, 'studentManagement-frontend', 'build')));
-app.get('/projects/studentManagement', (req, res) => {
-  res.sendFile(path.join(__dirname, 'studentManagement-frontend', 'build', 'index.html'));
+app.use(express.static(path.join(__dirname, 'frontend', 'src')));
+app.use(express.static(path.join(__dirname, 'frontend', 'build')));
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'frontend', 'build', 'index.html'));
 });
 
 //All routes that weren't found
 app.get('*', (req, res) => {
   console.log(req.url);
-  console.log(req.params);
   res.send("Hello World");})
 
 if (true) {var server = http.createServer(app);
@@ -65,6 +50,5 @@ server.on('error', (error) => {
 });
 // Start the server
 server.listen(port, () => {
-  console.log(path.join(__dirname, 'project-Naithani', 'build'));
   console.log(`Server is running on port ${port}`);
 });
