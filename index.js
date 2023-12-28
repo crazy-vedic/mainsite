@@ -32,12 +32,12 @@ app.use('/api/students', require('./backend/studentManagement'));
 //Serve student managements files
 app.use(express.static(path.join(__dirname, 'frontend', 'src')));
 app.use(express.static(path.join(__dirname, 'frontend', 'build')));
-app.get('/', (req, res) => {
+app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'frontend', 'build', 'index.html'));
 });
 
 //All routes that weren't found
-app.get('*', (req, res) => {
+app.get('/', (req, res) => {
   console.log(req.url);
   res.send("Hello World");})
 
