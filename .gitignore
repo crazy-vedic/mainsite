@@ -1,4 +1,4 @@
-/studentManagement-frontend/build
-/studentManagement-frontend/.cache
-/studentManagement-frontend/node_modules
+frontend/build/
+frontend/node_modules/
+frontend/public/
 .env

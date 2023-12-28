@@ -2,8 +2,8 @@
 const cors = require('cors');
 const bodyParser = require('body-parser');
 const mongoose = require('mongoose');
-const adminList = require('./../models/adminList')
-const studentlist = require('./../models/studentList')
+const adminList = require('./models/adminList')
+const studentlist = require('./models/studentList')
 jsonwebtoken = require('jsonwebtoken');
 require('dotenv').config();
 

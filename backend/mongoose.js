@@ -9,7 +9,6 @@ mongoose.connect(mongoURL,
     }
 ).then(() => {
   console.log(`Connected to database studentDBMSDB`);
-  //Router.listen(PORT, function() {console.log(`Server is running on port ${PORT}`)}
 }).catch((err) => {console.log(err);});
 
 const connection = mongoose.connection;
