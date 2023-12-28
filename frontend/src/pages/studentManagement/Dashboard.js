@@ -1,5 +1,4 @@
-import { useCallback, useEffect, useState ,useRef } from 'react';
-import './Dashboard.css';
+import { useCallback, useEffect, useState ,useRef, useMemo } from 'react';import './Dashboard.css';
 import { ToastContainer, toast } from 'react-toastify';
 import React from 'react';
 import 'react-toastify/dist/ReactToastify.css';
@@ -8,8 +7,15 @@ import { Link } from 'react-router-dom';
 
 function Dashboard() {
   const BACKENDSERVER = "https://vedicvarma.com";
-  const toasty =  {position: "top-right",autoClose: 5000,hideProgressBar: false,closeOnClick: true,draggable: true,progress: undefined,theme: "colored",}
-  const tokenRef = useRef(localStorage.getItem('token'));
+  const toasty = useMemo(() => ({
+    position: "top-right",
+    autoClose: 5000,
+    hideProgressBar: false,
+    closeOnClick: true,
+    draggable: true,
+    progress: undefined,
+    theme: "colored",
+  }), []);  const tokenRef = useRef(localStorage.getItem('token'));
   const [students, setStudents] = useState([]);
   const [addStudent, setAddStudent] = useState({show:false,name:null, _id: NaN, joining: null, gpa: null, section: null,program:null});
   const [updateStudents, setUpdateStudents] = useState([]);
@@ -42,7 +48,7 @@ function Dashboard() {
         }else{
         toast.error(`${response.status} : ${err}`,toasty);
         console.log(err);}});
-  },[])
+  },[toasty])
   useEffect(() => {
     const fetchAndUpdateStudents = () => {
       fetchStudents();

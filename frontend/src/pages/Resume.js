@@ -1,15 +1,14 @@
 import React from 'react';
-import resume from './resume.pdf'
+import resume from './resume.pdf';
 
 function Resume() {
   return (
-    <div>
-      <iframe
-        title="Resume"
+    <div style={{width: '100vw', height: '100vh', overflow: 'hidden'}}>
+      <embed 
         src={resume}
-        width="100%"
-        height="1000"
-      ></iframe>
+        type="application/pdf" 
+        style={{width: '100%', height: '100%'}}
+      />
     </div>
   );
 }
