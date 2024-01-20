@@ -7,7 +7,6 @@ import Dashboard from './pages/studentManagement/Dashboard';
 import Error404 from './pages/Error404';
 import Home from './pages/home/Home';
 import Resume from './pages/Resume'
-import DsaShit from './pages/dsaShit/dsaShit'
 import Projects from './pages/Projects'
 
 function App() {
@@ -19,7 +18,6 @@ function App() {
           <Route path='/404' element={<Error404 />} />
           <Route path='/resume' element={<Resume />} />
           <Route path='/projects' element={<Projects />} />
-          <Route path='/projects/dsaShit' element={<DsaShit />} />
           <Route path='/projects/studentManagement' element={<Login />} />
           <Route path='/projects/studentManagement/404' element={<StudentManagementNo404Page />} />
           <Route path='/projects/studentManagement/dashboard' element={<Dashboard />} />
