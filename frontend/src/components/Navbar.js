@@ -20,6 +20,10 @@ background-color:#000000;
 box-shadow: inset 0 0 1000px 1000px rgba(0, 0, 0, 0.747);
 margin:0;
 
+*{
+  color:grey;
+}
+
 .menu {
   display: -webkit-box; 
   display: -moz-box;
