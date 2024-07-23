@@ -2,7 +2,7 @@ import React, { useEffect, lazy, Suspense } from 'react'
 import TypeWriter from '../../components/Typewriter'
 import styled from "styled-components";
 import Navbar from '../../components/Navbar'
-import check from '../../components/check.png';
+import CbackgroundImage from '../../components/background.jpeg';
 import {BallTriangle} from 'react-loader-spinner'
 //https://oluwakayode.netlify.app/
 //https://github.com/lollykrown/react-portfolio/tree/main
@@ -12,11 +12,13 @@ function Home() {
     const words = [
         "Hi",
         `I'm Vedic`,
-        "A Software Developer ",
-        "Open source Contributor"
+        "A Developer ",
+        "A Researcher",
+        "Data Scientist"
     ]
 
     useEffect(() => {
+        document.body.style.backgroundColor='#000'
         window.scrollTo({ top: 0, behavior: 'smooth' })
         return () => {
         }
@@ -25,14 +27,12 @@ function Home() {
     return (
         <HomeWrapper>
             <Navbar />
-            <section className="top">
+            <section className="top" style={{'backgroundImage':`url(${CbackgroundImage})`,'filter':'brightness(3)'}}>
                 <div className="caption" >
                     <div className="box">
                         <h2 className=""><TypeWriter className="" texts={words} /> </h2>
-                        <h2 className="l"> 👋 </h2>
                     </div>
                 </div>
-                <a className="arrow" href="#portfolio"> <img width="70px" height="70px" src={check} alt="down-arrow" /></a>
             </section>
             <div className="portfolio" id="portfolio" >
                 <Suspense fallback={<BallTriangle
@@ -47,29 +47,30 @@ function Home() {
                 </Suspense>
             </div>
 
-            <section className="footer">
-                <div className="form" id="contact">
-                    <form name="reach" method="POST" netlify>
-                        <p className="col">Please feel free to contact me for freelance projects and collaborations</p>
-                        <input type="text" id="name" name="name" placeholder="Name" required />
-                        <input type="email" id="email" name="email" placeholder="Email" required />
-                        <textarea type="text" id="message" name="message" placeholder="Message" required></textarea>
-                        <input type="submit" className="btn-send" />
-                    </form>
-                </div>
+            <section className="footer" id='contact'>
+            
+            <form
+                action="https://formspree.io/f/xrbzgjql"
+                method="POST"
+                style={{position:'relative','bottom':'4.5rem'}}>
+                <p className='col' style={{color:'black'}}>
+                    Please contact me for any collaboration regarding research or projects.
+                </p>
+                <input type="text" name="name" placeholder='Name'></input>
+                <input type="email" name="email" placeholder='Email'></input>
+                <textarea name="message" placeholder='Message'></textarea>
+                <button type="submit" className='btn-send'>Submit</button>
+            </form>
                 <h1>Contact</h1>
                 <ul className="links">
-                    <li className="icon"><a href="https://github.com/lollykrown"><i className="fa fa-github"></i></a></li>
-                    <li className="icon"><a href="https://twitter.com/oluwakayy"><i className="fa fa-twitter "></i></a></li>
-                    <li className="icon"><a href="https://wa.me/+2347034750495"><i className="fa fa-whatsapp "></i></a></li>
+                    <li className="icon"><a href="https://github.com/crazy-vedic"><i className="fa fa-github"></i></a></li>
+                    <li className="icon"><a href="https://wa.me/+918766304030"><i className="fa fa-whatsapp "></i></a></li>
                 </ul>
                 <h3 className="email-label">Email</h3>
-                <a className="email" href="mailto:lollykrown@gmail.com">lollykrown@gmail.com</a>
-                <h3 className="skype-label">Skype</h3>
-                <p className="skype">Oluwakayy</p>
+                <a className="email" href="mailto:vedic20052005@gmail.com">vedic20052005@gmail.com</a>
 
-                <p className="footnotes">&copy; 2020 <a href="https://oluwakayode.netlify.app"
-                    rel="noopener noreferrer" target="_blank">Ol&#250;wak&#225;y&#242;d&#233;.</a> All rights reserved.</p>
+                <p className="footnotes">&copy; 2024 <a href="https://vedicvarma.com"
+                    rel="noopener noreferrer" target="_blank">Vedic.</a> All rights reserved.</p>
             </section>
         </HomeWrapper >
     )
@@ -78,6 +79,7 @@ function Home() {
 export default Home
 
 const HomeWrapper = styled.div`
+*{box-sizing:border-box}
 .cen{
     margin: 36%;
     padding:5rem;
@@ -85,7 +87,6 @@ const HomeWrapper = styled.div`
 .top{
     height: 88vh;
     width: 100%;
-    background: url('/img/bg.webp');
     background-size: cover;
     background-repeat: no-repeat;
     box-shadow: inset 0 0 1000px 1000px rgba(0, 0, 0, 0.747);
@@ -153,16 +154,7 @@ const HomeWrapper = styled.div`
     z-index: 11;
     box-shadow: 5px 15px 15px 15px rgba(0,0,0,0.35)
 }
-.portfolio-container {
-    position: relative;
-    margin: 0 0 3em 0;
-}
-.portfolio-title {
-    margin-left: 1rem;
-    margin-top: 0;
-    color: #ffffff;
-    max-width: 400px; */
-}
+
 .center {
     text-align:center;
     font-size: 3rem;

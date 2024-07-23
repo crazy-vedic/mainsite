@@ -1,13 +1,13 @@
 import React from 'react';
 import styled from "styled-components";
-import github from '../components/github.png';
+import v from '../components/v.png';
 
 const Navbar = () => (
   <NavWrapper>
     <ul className="menu">
-      <li className="nav-item logo" ><a href="/" ><img src={github} alt="logo" /></a></li>
+      <li className="nav-item logo" ><a href="/" ><img src={v} style={{maxHeight:'60px'}} alt="logo" /></a></li>
       <li className="nav-item mt-2"><a href="#portfolio" >Portfolio</a></li>
-      <li className="nav-item mt-2"><a href="#about" >About</a></li>
+      <li className="nav-item mt-2"><a href="/resume" >Resume</a></li>
       <li className="nav-item mt-2"><a href="#contact" >Contact</a></li>
     </ul>
   </NavWrapper>

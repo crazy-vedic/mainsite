@@ -1,9 +1,9 @@
-import { useCallback, useEffect, useState ,useRef, useMemo } from 'react';import './Dashboard.css';
+import { useCallback, useEffect, useState ,useRef, useMemo } from 'react';
+import './Dashboard.css';
 import { ToastContainer, toast } from 'react-toastify';
 import React from 'react';
 import 'react-toastify/dist/ReactToastify.css';
 import { Link } from 'react-router-dom';
-
 
 function Dashboard() {
   const BACKENDSERVER = "https://vedicvarma.com";
@@ -121,7 +121,6 @@ function Dashboard() {
 var index;
   return (
     <div id="dashboard-root">
-      {/*<button onClick={() => toast.warn("etouhetotusehiesu",toasty)}>toasty pls</button>*/}
       <ToastContainer />
       <h1>Student Dashboard</h1>
       <button id="add-student-btn" onClick={() => {if (!addStudent.show) {getLastId();};setAddStudent(prevState=>({...prevState,'show':!addStudent.show}));}}>{addStudent.show?"Close Menu":"Add Student"}</button>
@@ -291,3 +290,4 @@ var index;
     </div>
   )}
 export default Dashboard
+

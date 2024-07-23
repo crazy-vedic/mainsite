@@ -1,45 +1,55 @@
-table {
+/* Scoped styles to a specific class to avoid global effects */
+#dashboard-root {
     font-family: arial, sans-serif;
+    color: white;
+    background-color: purple;
+  }
+  
+  #dashboard-root table {
     border-collapse: collapse;
     width: 100%!important;
     background-color: black;
-    color:white;
+    color: white;
   }
-td, th {
-text-align: left;
-padding: 8px;
-font-size: 1.5rem;
-}
-
-thead {
+  
+  #dashboard-root td, #dashboard-root th {
+    text-align: left;
+    padding: 8px;
+    font-size: 1.5rem;
+  }
+  
+  #dashboard-root thead {
     background-color: #473333;
-}
-
-table#main-table>tbody>tr:nth-child(odd) {
-background-color: #968e8e;
-}
-
-table#main-table>tbody>tr:nth-child(even) {
-background-color: #545252;
-}
-table#add-student-table>thead>tr>td>input {
-    width:inherit;
-}
-div#add-student-div {
+  }
+  
+  #dashboard-root table#main-table>tbody>tr:nth-child(odd) {
+    background-color: #968e8e;
+  }
+  
+  #dashboard-root table#main-table>tbody>tr:nth-child(even) {
+    background-color: #545252;
+  }
+  
+  #dashboard-root table#add-student-table>thead>tr>td>input {
+    width: inherit;
+  }
+  
+  #dashboard-root div#add-student-div {
     margin-bottom: 1rem;
-}
-input[type='checkbox']{
+  }
+  
+  #dashboard-root input[type='checkbox'] {
     width: 1.5rem;
     height: 1.5rem;
-}
-
-h1 {
+  }
+  
+  #dashboard-root h1 {
     text-align: center;
     color: white;
     padding: inherit;
-}
-
-button.editStudent {
+  }
+  
+  #dashboard-root button.editStudent {
     height: 2rem;
     width: 2rem;
     padding: 0; /* Remove default button padding */
@@ -47,110 +57,135 @@ button.editStudent {
     border: none; /* Remove button border */
   }
   
-button.editStudent img {
-height: 100%;
-width: 100%;
-object-fit: cover; /* Ensure the image covers the entire button */
-}
-
-.w20 {
-    width:20rem;
-}
-.w18 {
-width: 18rem;
-}
-.w10 {
-width: 10rem;
-}
-.w13_5 {
-    width:13.5rem;
-}
-.w6 {
-width: 6rem;
-}
-.w8 {
-width: 8rem;
-}
-.w7 {
-    width:7rem;
-}
-.w5 {
-width: 5rem;
-}
-.w2 {
-    width:2rem;
-}
-.w3 {
-width: 3rem;
-}
-.w4 {
-width: 4rem;
-}
-.w15 {
-width: 15rem;
-}
-button>img {
+  #dashboard-root button.editStudent img {
+    height: 100%;
+    width: 100%;
+    object-fit: cover; /* Ensure the image covers the entire button */
+  }
+  
+  #dashboard-root .w20 {
+    width: 20rem;
+  }
+  
+  #dashboard-root .w18 {
+    width: 18rem;
+  }
+  
+  #dashboard-root .w10 {
+    width: 10rem;
+  }
+  
+  #dashboard-root .w13_5 {
+    width: 13.5rem;
+  }
+  
+  #dashboard-root .w6 {
+    width: 6rem;
+  }
+  
+  #dashboard-root .w8 {
+    width: 8rem;
+  }
+  
+  #dashboard-root .w7 {
+    width: 7rem;
+  }
+  
+  #dashboard-root .w5 {
+    width: 5rem;
+  }
+  
+  #dashboard-root .w2 {
+    width: 2rem;
+  }
+  
+  #dashboard-root .w3 {
+    width: 3rem;
+  }
+  
+  #dashboard-root .w4 {
+    width: 4rem;
+  }
+  
+  #dashboard-root .w15 {
+    width: 15rem;
+  }
+  
+  #dashboard-root button>img {
     width: 100%;
     height: 100%;
     object-fit: cover;
     padding: 0px;
-}
-div#updateDiv>button {
-    padding:0px;
-}
-table {
+  }
+  
+  #dashboard-root div#updateDiv>button {
+    padding: 0px;
+  }
+  
+  #dashboard-root table {
     width: 100%;
     table-layout: fixed;
   }
-  td {
+  
+  #dashboard-root td {
     width: 50%;
     padding: 5px;
     box-sizing: border-box; /* Include padding and border in the width calculation */
   }
-  input[type="text"] {
+  
+  #dashboard-root input[type="text"] {
     width: 100%;
     box-sizing: border-box;
   }
-  input::placeholder {
+  
+  #dashboard-root input::placeholder {
     color: #00000064;
     font-size: large;
   }
-tbody>tr>td>input {
+  
+  #dashboard-root tbody>tr>td>input {
     background-color: #00000052;
     font-size: large;
     color: white;
-}
-div#addRemoveStudents-div {
+  }
+  
+  #dashboard-root div#addRemoveStudents-div {
     display: flex;
     flex-direction: row;
     justify-content: space-evenly;
     align-items: center;
     gap: 0.3rem;
-}
-button#add-student-btn {
+  }
+  
+  #dashboard-root button#add-student-btn {
     background-color: green;
     border: none;
     padding: 1rem;
-    width:7rem;
-}
-div#updateDiv {
+    width: 7rem;
+  }
+  
+  #dashboard-root div#updateDiv {
     display: flex;
     flex-direction: row;
     justify-content: space-evenly;
     align-items: center;
     gap: 0.3rem;
-}
-div#updateDiv>button {
+  }
+  
+  #dashboard-root div#updateDiv>button {
     background-color: transparent;
     border: none;
-}
-button>img {
+  }
+  
+  #dashboard-root button>img {
     background-color: transparent;
     width: 100%;
     height: 100%;
-}
-button#delete-students {
+  }
+  
+  #dashboard-root button#delete-students {
     background-color: red;
     border: none;
     padding: 1rem;
-}
+  }
+  

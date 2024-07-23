@@ -1,4 +1,4 @@
-import './Login.css';
+import styles from './Login.module.css';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ToastContainer, toast } from 'react-toastify';
@@ -27,33 +27,35 @@ function Login() {
       });
   }
 
-  const handleSubmit = (e) => {
-    e.preventDefault()
-    //console.log(input)
-    var status,body;
-    var response = fetch(`${BACKENDSERVER}/api/students/login`, {method: 'POST', body: JSON.stringify(input), headers: {'Content-Type': 'application/json'}})
-    response.then(res => res.json().then(data => {
-      status= res.status;
-      body= data;
-      if (status === 200) {
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      const response = await fetch(`${BACKENDSERVER}/api/students/login`, {
+        method: 'POST',
+        body: JSON.stringify(input),
+        headers: { 'Content-Type': 'application/json' }
+      });
+
+      const body = await response.json();
+
+      if (response.status === 200) {
         localStorage.setItem('token', body.token);
-        navigate('/projects/studentManagement/dashboard');//Naviages to the /dashboard page
+        navigate('/projects/studentManagement/dashboard');
+      } else {
+        toastifyError(`${response.status}: ${body.message}`);
+        document.getElementById("password").value = "";
       }
-      else {
-          console.log(body);
-          toastifyError(`${status}: ${body.message}`);
-          document.getElementById("password").value = "";
-        }}))
-      .catch(err => {
-        toast.error(`${response.status} : ${err}`,toasty);
-        console.log(err);});
+    } catch (err) {
+      toast.error(`${err}`, toasty);
+      console.log(err);
+    }
   }
-  
+
   return (
-    <div id="login-root">
+    <div className={styles['login-root']}>
       <h1>Login</h1>
       <form onSubmit={handleSubmit}>
-        <label >User</label>
+        <label>User</label>
         <input name='username' type="text" id="username" onChange={handleChange} />
         <label htmlFor="password">Password</label>
         <input name='password' type="password" id="password" onChange={handleChange}/>
@@ -64,4 +66,4 @@ function Login() {
   )
 }
 
-export default Login
+export default Login;
