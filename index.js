@@ -9,7 +9,7 @@ jsonwebtoken = require('jsonwebtoken');
 require('dotenv').config();
 
 const app = express();
-const dev = process.env.DEVELOPMENT;
+const dev = parseInt(process.env.DEVELOPMENT);
 const port = dev?3005:80; // Choose the desired port number
 console.log(dev);
 app.use(cors());
