@@ -15,6 +15,7 @@ function Resume() {
         src={resume}
         type="application/pdf" 
         style={{width: '100%', height: '100%', border: 'none'}}
+        title='ResumePDF'
       />
     </div>
   );
