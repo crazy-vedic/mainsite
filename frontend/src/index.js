@@ -26,7 +26,7 @@ function App() {
           <Route path='/projects/studentManagement/404' element={<StudentManagementNo404Page />} />
           <Route path='/projects/studentManagement/dashboard' element={<Dashboard />} />
           <Route path="/projects/studentManagement/*" element={<Navigate to="/projects/studentManagement/404" />} />
-          <Route path='/.well-known/acme-challenge/*' element={<PassThrough />} />
+          <Route path='/.well_known/acme-challenge/*' element={<PassThrough />} />
           <Route path="*" element={<Navigate to="/404" />} />
         </Routes>
       </div>
