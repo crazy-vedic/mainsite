@@ -1,0 +1,58 @@
+[
+  {
+    "id": "library-management-system",
+    "title": "GUI-Based Library Management System",
+    "description": "A feature-rich desktop app for managing a library catalog, with sorting, filtering, and check-in/check-out functionality.",
+    "stack": ["Python", "Tkinter", "MySQL"],
+    "media": { "type": "image", "src": "/assets/projects/library-management-system.png" },
+    "link": "https://github.com/crazy-vedic/Library-Management-System"
+  },
+  {
+    "id": "dell-hackathon-smart-navigator",
+    "title": "Dell Hackathon: Smart Navigator",
+    "description": "Led frontend development for the Smart Navigator project in the 3-month Dell Hackathon; won 1st place among 20 teams — see the post here",
+    "stack": ["React Native"],
+    "media": null,
+    "link": "https://www.linkedin.com/feed/update/urn:li:activity:7156234041803837440/"
+  },
+  {
+    "id": "health-dome",
+    "title": "Health Dome",
+    "description": "Among the top 3 teams out of 250 in Smart India Hackathon 2024; led backend, DevOps, and IoT development to streamline OPD processes, and ideated a patent-pending hospital bed queuing model — see post here.",
+    "stack": ["Python", "Flask", "React", "Docker", "IoT"],
+    "media": null,
+    "link": "https://www.linkedin.com/posts/vedic-varma_innovation-smartindiahackathon-healthcaretech-activity-7247649378960596992-HpQP"
+  },
+  {
+    "id": "discord-bot-stella",
+    "title": "Discord Bot: Stella",
+    "description": "Created and maintained a Discord bot (Stella) for international use with payment integration",
+    "stack": ["Python", "Discord.py"],
+    "media": { "type": "image", "src": "/assets/projects/stella.png" },
+    "link": null
+  },
+  {
+    "id": "pathfinding-visualizer",
+    "title": "Pathfinding Visualizer",
+    "description": "Designed a pathfinding visualizer to support research in machine learning-based algorithms. Check it out here",
+    "stack": ["Python", "matplotlib"],
+    "media": { "type": "video", "src": "/assets/projects/pathfinding.mp4" },
+    "link": "https://www.linkedin.com/feed/update/urn:li:activity:7206898124106153984/"
+  },
+  {
+    "id": "sorting-algorithm-research",
+    "title": "Sorting Algorithm Research",
+    "description": "Ongoing work on a variation of selection sort targeting sub-N-log-N time complexity.",
+    "stack": ["Python"],
+    "media": null,
+    "link": null
+  },
+  {
+    "id": "optimized-square-root-algorithm",
+    "title": "Optimized Square Root Algorithm",
+    "description": "Researched and implemented a square-root approximation algorithm that converges much faster than the Newton-Raphson technique.",
+    "stack": ["Python", "C"],
+    "media": null,
+    "link": null
+  }
+]

@@ -49,153 +49,46 @@ const IconChat = (props) => (
   </svg>
 );
 
-const IconArrowUp = (props) => (
-  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" {...props}>
-    <path d="M12 19V5M6 11l6-6 6 6" />
-  </svg>
-);
-
 /* ============================================================
-   ScrollScene — a fixed, full-viewport layer of wireframe shapes
-   rendered in real 3D via CSS perspective/transform, driven by
-   scroll position. No canvas/WebGL dependency: three flat SVG
-   "planes" are individually rotated and translated in a shared
-   perspective container, so they read as depth as you scroll.
-   rAF-throttled and passive so it doesn't fight the browser.
+   Typewriter hook — cycles through profile.roles. Works fine
+   with a single entry too (it just types, pauses, and retypes).
    ============================================================ */
 
-function ScrollScene() {
-  const sceneRef = useRef(null);
-  const ticking = useRef(false);
+function useTypewriter(words, { typingSpeed = 70, deletingSpeed = 40, pause = 1800 } = {}) {
+  const [text, setText] = useState('');
+  const [wordIndex, setWordIndex] = useState(0);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
-    const docHeight = () =>
-      Math.max(
-        document.documentElement.scrollHeight,
-        document.body.scrollHeight,
-      ) - window.innerHeight;
+    if (!words || words.length === 0) return undefined;
+    const current = words[wordIndex % words.length];
+    let timeout;
 
-    const scrollY = () =>
-      window.scrollY ||
-      window.pageYOffset ||
-      document.documentElement.scrollTop ||
-      document.body.scrollTop ||
-      0;
+    if (!deleting && text === current) {
+      timeout = setTimeout(() => setDeleting(true), pause);
+    } else if (deleting && text === '') {
+      setDeleting(false);
+      setWordIndex((i) => (i + 1) % words.length);
+    } else {
+      timeout = setTimeout(() => {
+        setText((t) => current.slice(0, deleting ? t.length - 1 : t.length + 1));
+      }, deleting ? deletingSpeed : typingSpeed);
+    }
 
-    const update = () => {
-      const el = sceneRef.current;
-      if (!el) {
-        ticking.current = false;
-        return;
-      }
-      const y = scrollY();
-      const max = docHeight();
-      const progress = max > 0 ? y / max : 0;
-      el.style.setProperty('--scroll', progress.toFixed(4));
-      el.style.setProperty('--scroll-px', `${y.toFixed(0)}px`);
-      ticking.current = false;
-    };
+    return () => clearTimeout(timeout);
+  }, [text, deleting, wordIndex, words, typingSpeed, deletingSpeed, pause]);
 
-    const onScroll = () => {
-      if (!ticking.current) {
-        ticking.current = true;
-        requestAnimationFrame(update);
-      }
-    };
-
-    update();
-    window.addEventListener('scroll', onScroll, { passive: true });
-    window.addEventListener('resize', onScroll);
-    return () => {
-      window.removeEventListener('scroll', onScroll);
-      window.removeEventListener('resize', onScroll);
-    };
-  }, []);
-
-  return (
-    <div className="scroll-scene" ref={sceneRef} aria-hidden="true">
-      <div className="scroll-scene__stage">
-        <div className="scroll-scene__plane scroll-scene__plane--grid" />
-        <svg className="scroll-scene__plane scroll-scene__plane--ring" viewBox="0 0 400 400">
-          <circle cx="200" cy="200" r="150" />
-          <circle cx="200" cy="200" r="110" />
-        </svg>
-        <svg className="scroll-scene__plane scroll-scene__plane--tri" viewBox="0 0 200 200">
-          <polygon points="100,10 190,180 10,180" />
-        </svg>
-        <svg className="scroll-scene__plane scroll-scene__plane--dots" viewBox="0 0 400 400">
-          {Array.from({ length: 24 }).map((_, i) => (
-            <circle key={i} cx={20 + (i % 6) * 70} cy={20 + Math.floor(i / 6) * 70} r="2.4" />
-          ))}
-        </svg>
-      </div>
-    </div>
-  );
+  return text;
 }
 
 /* ============================================================
-   ScrollToTop — small pill bottom-left, fades in after the hero,
-   matches the amber/dark identity.
+   Hero
    ============================================================ */
 
-function ScrollToTop() {
-  const [progress, setProgress] = useState(0);
-  const ticking = useRef(false);
-
-  useEffect(() => {
-    const update = () => {
-      const vh = window.innerHeight;
-      // Start fading in one viewport height down, fully visible by three.
-      const start = vh;
-      const end = vh * 3;
-      const t = Math.min(1, Math.max(0, (window.scrollY - start) / (end - start)));
-      setProgress(t);
-      ticking.current = false;
-    };
-    const onScroll = () => {
-      if (!ticking.current) {
-        ticking.current = true;
-        requestAnimationFrame(update);
-      }
-    };
-    update();
-    window.addEventListener('scroll', onScroll, { passive: true });
-    window.addEventListener('resize', onScroll);
-    return () => {
-      window.removeEventListener('scroll', onScroll);
-      window.removeEventListener('resize', onScroll);
-    };
-  }, []);
-
-  const handleClick = () => window.scrollTo({ top: 0, behavior: 'smooth' });
-
-  return (
-    <button
-      type="button"
-      className="scroll-top"
-      onClick={handleClick}
-      aria-label="Scroll to top"
-      title="Scroll to top"
-      style={{
-        opacity: progress,
-        // Longer travel: rises ~40px over the full fade distance.
-        transform: `translateY(${(1 - progress) * 40}px) scale(${0.9 + progress * 0.1})`,
-        pointerEvents: progress > 0.05 ? 'auto' : 'none',
-      }}
-    >
-      <IconArrowUp />
-    </button>
-  );
-}
-
-/* ============================================================
-   Hero — headline + name on the left, the LLM chat live and
-   embedded on the right. No typewriter; the chat is the moment.
-   ============================================================ */
-
-function Hero({ profile, siteConfig }) {
+function Hero({ profile }) {
+  const roles = profile?.roles?.length ? profile.roles : ['A Researcher'];
+  const typed = useTypewriter(roles);
   const heroImage = profile?.heroImage;
-  const roles = profile?.roles?.length ? profile.roles : [];
 
   const scrollToProjects = () => {
     document.getElementById('projects')?.scrollIntoView({ behavior: 'smooth' });
@@ -207,25 +100,16 @@ function Hero({ profile, siteConfig }) {
       style={heroImage ? { '--hero-image': `url(${heroImage})` } : undefined}
     >
       <div className={`hero__backdrop ${heroImage ? 'hero__backdrop--photo' : 'hero__backdrop--gradient'}`} />
-      <div className="hero__grid">
-        <div className="hero__content">
-          <p className="eyebrow">{'// portfolio'}</p>
-          {profile?.name && <h1 className="hero__headline">{profile.name}</h1>}
-          {roles.length > 0 && (
-            <p className="hero__roles">{roles.join(' · ')}</p>
-          )}
-          <button className="hero__scroll" onClick={scrollToProjects} type="button">
-            See the work ↓
-          </button>
-        </div>
-
-        <div className="hero__chat">
-          <ChatWidget
-            config={siteConfig?.chat}
-            name={profile?.name}
-            variant="inline"
-          />
-        </div>
+      <div className="hero__content">
+        <p className="eyebrow">// portfolio</p>
+        <h1 className="hero__headline">
+          {typed}
+          <span className="caret" aria-hidden="true" />
+        </h1>
+        {profile?.name && <p className="hero__name">{profile.name}</p>}
+        <button className="hero__scroll" onClick={scrollToProjects} type="button">
+          See the work ↓
+        </button>
       </div>
     </section>
   );
@@ -275,7 +159,7 @@ function ProjectsSection({ projects }) {
   if (!projects || projects.length === 0) return null;
   return (
     <section id="projects" className="section">
-      <p className="eyebrow">{'// projects'}</p>
+      <p className="eyebrow">// projects</p>
       <h2 className="section__title">Projects</h2>
       <div className="project-grid">
         {projects.map((p) => (
@@ -306,7 +190,7 @@ function SkillsSection({ skills }) {
   if (!skills || skills.length === 0) return null;
   return (
     <section id="skills" className="section">
-      <p className="eyebrow">{'// skills'}</p>
+      <p className="eyebrow">// skills</p>
       <h2 className="section__title">Skills</h2>
       <div className="skill-grid">
         {skills.map((s) => (
@@ -352,7 +236,7 @@ function ExperienceSection({ experience }) {
   if (!experience || experience.length === 0) return null;
   return (
     <section id="experience" className="section">
-      <p className="eyebrow">{'// experience'}</p>
+      <p className="eyebrow">// experience</p>
       <h2 className="section__title">Experience</h2>
       <div className="experience-list">
         {experience.map((item, i) => (
@@ -387,7 +271,7 @@ function CertificationsSection({ certifications }) {
   if (!certifications || certifications.length === 0) return null;
   return (
     <section id="certifications" className="section">
-      <p className="eyebrow">{'// certifications'}</p>
+      <p className="eyebrow">// certifications</p>
       <h2 className="section__title">Certifications</h2>
       <div className="cert-list">
         {certifications.map((c, i) => (
@@ -446,7 +330,7 @@ function ContactSection({ contact }) {
 
   return (
     <section id="contact" className="section">
-      <p className="eyebrow">{'// contact'}</p>
+      <p className="eyebrow">// contact</p>
       <h2 className="section__title">Contact</h2>
       <div className="contact-grid">
         <div className="contact-info">
@@ -520,25 +404,18 @@ function ContactSection({ contact }) {
    Chat widget — talks to a self-hosted LLM through /api/chat.
    The backend owns the system prompt / model choice; this
    component only knows about { message, history } -> { reply }.
-
-   variant="inline"   — embedded in the hero, always open, no
-                         toggle button, fills its container.
-   variant="floating" — the original bottom-right bubble+panel,
-                         rendered once outside the hero so people
-                         can keep chatting after they scroll away.
    ============================================================ */
 
-function ChatWidget({ config, name, variant = 'floating' }) {
+function ChatWidget({ config, name }) {
   const enabled = config?.enabled !== false;
-  const isInline = variant === 'inline';
-  const [open, setOpen] = useState(isInline);
+  const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const [sending, setSending] = useState(false);
   const listRef = useRef(null);
 
   useEffect(() => {
-    if ((isInline || open) && messages.length === 0) {
+    if (open && messages.length === 0) {
       setMessages([
         { role: 'assistant', content: config?.greeting || `Hi! Ask me anything about ${name || 'Vedic'}.` },
       ]);
@@ -583,59 +460,52 @@ function ChatWidget({ config, name, variant = 'floating' }) {
       e.preventDefault();
       send();
     }
-    if (e.key === 'Escape' && !isInline) setOpen(false);
+    if (e.key === 'Escape') setOpen(false);
   };
 
   if (!enabled) return null;
 
-  const panel = (
-    <div className={`chat-panel ${isInline ? 'chat-panel--inline' : ''}`} role="dialog" aria-label={config?.title || 'Chat'}>
-      <div className="chat-panel__header">
-        <span>{config?.title || `Ask about ${name || 'me'}`}</span>
-        {!isInline && (
-          <button type="button" onClick={() => setOpen(false)} aria-label="Close chat">
-            <IconClose />
-          </button>
-        )}
-      </div>
-
-      <div className="chat-panel__messages" ref={listRef}>
-        {messages.map((m, i) => (
-          <div key={i} className={`chat-bubble chat-bubble--${m.role}`}>
-            {m.content}
-          </div>
-        ))}
-        {sending && (
-          <div className="chat-bubble chat-bubble--assistant chat-bubble--typing" aria-live="polite">
-            <span />
-            <span />
-            <span />
-          </div>
-        )}
-      </div>
-
-      <div className="chat-panel__input">
-        <textarea
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          onKeyDown={handleKeyDown}
-          placeholder={config?.placeholder || 'Ask something…'}
-          rows={1}
-        />
-        <button type="button" onClick={send} disabled={sending || !input.trim()} aria-label="Send message">
-          <IconSend />
-        </button>
-      </div>
-    </div>
-  );
-
-  if (isInline) {
-    return <div className="chat-widget chat-widget--inline">{panel}</div>;
-  }
-
   return (
     <div className={`chat-widget ${open ? 'chat-widget--open' : ''}`}>
-      {open && panel}
+      {open && (
+        <div className="chat-panel" role="dialog" aria-label={config?.title || 'Chat'}>
+          <div className="chat-panel__header">
+            <span>{config?.title || `Ask about ${name || 'me'}`}</span>
+            <button type="button" onClick={() => setOpen(false)} aria-label="Close chat">
+              <IconClose />
+            </button>
+          </div>
+
+          <div className="chat-panel__messages" ref={listRef}>
+            {messages.map((m, i) => (
+              <div key={i} className={`chat-bubble chat-bubble--${m.role}`}>
+                {m.content}
+              </div>
+            ))}
+            {sending && (
+              <div className="chat-bubble chat-bubble--assistant chat-bubble--typing" aria-live="polite">
+                <span />
+                <span />
+                <span />
+              </div>
+            )}
+          </div>
+
+          <div className="chat-panel__input">
+            <textarea
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={handleKeyDown}
+              placeholder={config?.placeholder || 'Ask something…'}
+              rows={1}
+            />
+            <button type="button" onClick={send} disabled={sending || !input.trim()} aria-label="Send message">
+              <IconSend />
+            </button>
+          </div>
+        </div>
+      )}
+
       <button
         type="button"
         className="chat-widget__toggle"
@@ -703,14 +573,13 @@ export default function Home() {
 
   return (
     <div className="home-page">
-      <ScrollScene />
-      <Hero profile={profile} siteConfig={siteConfig} />
+      <Hero profile={profile} />
       <ProjectsSection projects={projects} />
       <SkillsSection skills={skills} />
       <ExperienceSection experience={experience} />
       <CertificationsSection certifications={certifications} />
       <ContactSection contact={contact} />
-      <ScrollToTop />
+      <ChatWidget config={siteConfig?.chat} name={profile?.name} />
     </div>
   );
 }

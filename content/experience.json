@@ -1,0 +1,62 @@
+[
+  {
+    "role": "Software Development Intern",
+    "company": "Razorpay",
+    "location": "Bangalore",
+    "start": "Aug 2025",
+    "end": "Jun 2026",
+    "bullets": [
+      "Engineered and shipped full-stack features across 15+ microservices at Razorpay — including a self-serve risk alert platform, a TiDB+DataLake payment lookup migration, and E2E test infrastructure built from zero — delivering 500+ contributions over 10 months."
+    ]
+  },
+  {
+    "role": "Backend & Touchpoint Engineering Intern",
+    "company": "Referrush",
+    "location": "Bangalore",
+    "start": "Jul 2025",
+    "end": "Sep 2025",
+    "bullets": [
+      "Built scalable messaging infra (50+ brands, 1M+ daily messages) using Cloud API for whatsapp, SMTP for email & SMS using Firebase Functions; automated campaign dispatch, abandoned cart pings, and dynamic follow-up cadences."
+    ]
+  },
+  {
+    "role": "Backend & Systems Intern",
+    "company": "ASR Aviations",
+    "location": "Jaipur",
+    "start": "Mar 2025",
+    "end": "Jul 2025",
+    "bullets": [
+      "Deployed a secure POP3/SMTP mail system (10K+ daily emails) with SSL & reverse proxy with the custom domain: @asraviation.com; set up a reverse proxy and SSL authentication using Nginx on Ubuntu, hosted on KVM-2 in Hostinger."
+    ]
+  },
+  {
+    "role": "Backend & DevOps Intern",
+    "company": "Software Development Center",
+    "location": "Jaipur",
+    "start": "Aug 2024",
+    "end": "Jan 2025",
+    "bullets": [
+      "Developed a full-stack Wall-of-Fame portal with Next.js (frontend & backend) and MongoDB, hosted on Vercel."
+    ]
+  },
+  {
+    "role": "Research Intern",
+    "company": "DRDO, GTRE, Advanced Software Engineering Lab",
+    "location": "Bangalore",
+    "start": "May 2024",
+    "end": "Jul 2024",
+    "bullets": [
+      "Conducted research and engineered an optimized square root algorithm, slated for publication as a research paper"
+    ]
+  },
+  {
+    "role": "Full Stack Development Intern",
+    "company": "Skello",
+    "location": "New Delhi",
+    "start": "May 2023",
+    "end": "Jul 2023",
+    "bullets": [
+      "Developed a backend solution and a generative AI wrapper to streamline administrative tasks"
+    ]
+  }
+]

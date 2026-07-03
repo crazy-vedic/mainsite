@@ -1,0 +1,22 @@
+[
+  {
+    "category": "Programming Languages",
+    "note": "Experienced",
+    "items": ["Python", "JavaScript", "C", "Bash", "Java"]
+  },
+  {
+    "category": "Software Development",
+    "note": null,
+    "items": ["Design Before Code methodology", "Git", "Linux", "Bash Scripting", "DevOps Lifecycles"]
+  },
+  {
+    "category": "Frameworks & Libraries",
+    "note": null,
+    "items": ["Django", "Flask", "Win32API", "React", "React Native"]
+  },
+  {
+    "category": "Languages",
+    "note": null,
+    "items": ["English", "Hindi", "Spanish"]
+  }
+]

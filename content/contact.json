@@ -1,0 +1,13 @@
+{
+  "email": "vedic20052005@gmail.com",
+  "phone": "+91 8766304030",
+  "formspreeEndpoint": "https://formspree.io/f/xrbzgjql",
+  "formIntro": "Please contact me for any collaboration regarding research or projects.",
+  "socials": [
+    { "platform": "github", "url": "https://github.com/crazy-vedic" },
+    { "platform": "linkedin", "url": "https://www.linkedin.com/in/vedic-varma/" },
+    { "platform": "whatsapp", "url": "https://wa.me/+918766304030" }
+  ],
+  "footerName": "Vedic",
+  "footerNote": "All rights reserved."
+}

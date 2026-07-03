@@ -1,0 +1,44 @@
+[
+  {
+    "category": "Programming Languages & Frameworks",
+    "note": null,
+    "items": [
+      "Python",
+      "Go",
+      "JavaScript (React Native, Next.js)",
+      "C (OS-level)",
+      "Bash",
+      "Java"
+    ]
+  },
+  {
+    "category": "Tools & Technologies",
+    "note": null,
+    "items": [
+      "Firebase Functions",
+      "Docker",
+      "Git",
+      "Linux (Wayland)",
+      "MongoDB",
+      "SQL",
+      "Redis",
+      "REST/grpc/graphQL APIs",
+      "Nginx",
+      "Terraform Kong",
+      "TUI/CLI tools creation and usage",
+      "Kubernetes"
+    ]
+  },
+  {
+    "category": "DevOps & Infrastructure",
+    "note": null,
+    "items": [
+      "Vercel",
+      "Hostinger (KVM)",
+      "SMTP/POP3",
+      "Reverse Proxy",
+      "SSL",
+      "Cloud Messaging APIs (SMS & WhatsApp BSP)"
+    ]
+  }
+]

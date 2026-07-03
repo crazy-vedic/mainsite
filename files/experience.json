@@ -1,0 +1,33 @@
+[
+  {
+    "role": "Full Stack Development Engineer",
+    "company": "SKELLO",
+    "location": "New Delhi",
+    "start": "May 2023",
+    "end": "July 2023",
+    "bullets": [
+      "Built a product backend and a GenAI wrapper for administrative assistance."
+    ]
+  },
+  {
+    "role": "Freelance Full Stack Web Developer",
+    "company": "Self-employed",
+    "location": null,
+    "start": "June 2023",
+    "end": "Current",
+    "bullets": [
+      "Built MERN-stack web pages for companies, including landing pages for startups."
+    ]
+  },
+  {
+    "role": "Research Intern",
+    "company": "DRDO, GTRE",
+    "location": null,
+    "start": "May 2024",
+    "end": "July 2024",
+    "bullets": [
+      "Optimized software for gas turbine engines.",
+      "Researched an optimized square root algorithm that converges much faster than the Newton-Raphson technique."
+    ]
+  }
+]

@@ -1,29 +1,106 @@
-This MERN application consists of a frontend built with React and a backend built with Node.js using Express as the web framework. The frontend communicates with the backend via HTTP requests to perform CRUD (Create, Read, Update, Delete) operations on student data stored in a MongoDB database.
+# vedicvarma.com — Portfolio Site
 
-Backend (Node.js with Express and MongoDB):
+A data-driven portfolio site for Vedic Varma. All site content lives in `/content` as JSON files, served by Express via `GET /api/content`. The React frontend fetches that API and renders the home page dynamically — no rebuild needed to update projects, skills, experience, or certifications.
 
-The backend code is responsible for handling API requests and interacting with the MongoDB database to perform CRUD operations on student data.
-The backend code is organized into separate files, such as index.js, models/adminList.js, and models/studentList.js.
-index.js serves as the entry point for the backend code. It sets up the Express server, establishes a connection with the MongoDB database, and defines API routes for login, creating students, updating students, deleting students, and searching students.
-The adminList and studentList models define the schemas and models for the admin and student data stored in the MongoDB database.
-The backend code also includes authentication logic using JSON Web Tokens (JWT). It verifies the token sent in the request header for protected routes.
-The backend code uses various dependencies, such as express, cors, body-parser, mongoose, jsonwebtoken, and fs.
-The entire project works on HTTP(S) protected http, for which letsencrypt and acme was used.
+An optional AI chat widget (`POST /api/chat`) answers questions about Vedic using a self-hosted LLM (Ollama-compatible by default).
 
-Frontend (React):
+## Quick start
 
-The frontend code is responsible for displaying the user interface and handling user interactions.
-The frontend code is organized into separate files, such as index.js, Login.js, 404.js, and Dashboard.js.
-index.js serves as the entry point for the frontend code. It sets up the React application and renders the root component wrapped in a BrowserRouter for client-side routing.
-The Login.js component represents the login page. It handles user authentication by sending a POST request to the backend API with the username and password. It also displays toast notifications using react-toastify.
-The Dashboard.js component represents the dashboard page. It displays a table of student data fetched from the backend API and allows users to add, update, and delete student records. It uses react-toastify for displaying toast notifications and react-router-dom for client-side routing.
+```bash
+# Install dependencies (root + frontend)
+npm install
 
+# Build the React frontend
+npm run build
 
-Additional Concepts and Tools:
+# Start the server (default port 3000)
+npm start
+```
 
-React Hooks: The code uses React hooks, such as useState and useEffect, to manage state and perform side effects in functional components.
-React Router: The react-router-dom library is used for client-side routing, allowing navigation between different pages of the application without full page reloads.
-MongoDB: The code interacts with a MongoDB database to store and retrieve student data. It uses the mongoose library as an ORM (Object-Relational Mapping) tool for MongoDB.
-HTTP Requests: The frontend code makes HTTP requests to the backend API using the fetch API or axios library to perform CRUD operations on student data.
-Toast Notifications: The react-toastify library is used to display toast notifications for success, error, or informational messages to the user.
-CSS Styling: The code includes CSS files (Login.css and Dashboard.css) to style the login and dashboard pages of the application.
+Open [http://localhost:3000](http://localhost:3000).
+
+### Local development with hot reload
+
+Run the Express server and CRA dev server in separate terminals:
+
+```bash
+# Terminal 1 — API + production build (or rebuild after changes)
+npm start
+
+# Terminal 2 — React dev server with proxy to :3000
+npm run dev:frontend
+```
+
+The CRA dev server proxies `/api/*` requests to `http://localhost:3000` (configured in `frontend/package.json`).
+
+## Editing site content
+
+All content is in the `/content` folder:
+
+| File | What it controls |
+|---|---|
+| `profile.json` | Name, hero roles (typewriter), hero image, resume URL, nav links |
+| `projects.json` | Project cards (title, description, stack, media, link) |
+| `skills.json` | Skill categories |
+| `experience.json` | Work history with bullet points |
+| `certifications.json` | Certifications list |
+| `contact.json` | Email, Formspree endpoint, social links, footer text |
+| `siteConfig.json` | Chat widget copy and `chat.enabled` toggle |
+
+After editing any JSON file, refresh the page — changes appear immediately with no server restart.
+
+### Project media
+
+Place images and videos in `frontend/public/assets/projects/` and reference them in `projects.json`:
+
+```json
+"media": { "type": "image", "src": "/assets/projects/my-project.png" }
+```
+
+Set `"media": null` to use the automatic fallback tile.
+
+### Hero image
+
+Set `profile.heroImage` to a public path (e.g. `/assets/hero-desk.jpg`) or leave it empty for the gradient fallback.
+
+### Contact form
+
+Update `contact.formspreeEndpoint` with your Formspree form URL.
+
+### Chat widget
+
+Set `siteConfig.json` → `chat.enabled` to `false` to hide the widget without touching code.
+
+Configure the LLM in `.env` (copy from `.env.example`):
+
+```
+PORT=3000
+LLM_API_URL=http://localhost:11434
+LLM_MODEL=llama3.1
+LLM_API_KEY=
+```
+
+The chat endpoint is rate-limited to **1 request per minute per IP**.
+
+To swap LLM providers, edit only `backend/lib/llmClient.js`.
+
+## Project structure
+
+```
+content/           JSON source of truth
+backend/
+  lib/             contentStore, buildSystemPrompt, llmClient
+  routes/          /api/content, /api/chat
+frontend/
+  public/assets/   Static images, videos, resume.pdf
+  src/
+    App.js         Router + Navbar
+    pages/home/    Data-driven Home page
+index.js           Express server entrypoint
+```
+
+## Production deployment
+
+1. Set `PORT` in `.env` (or use your process manager / reverse proxy).
+2. Run `npm run build` then `npm start`.
+3. Point your reverse proxy (nginx, Caddy, etc.) at the Node process for TLS termination.

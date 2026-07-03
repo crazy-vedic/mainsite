@@ -1,0 +1,12 @@
+{
+  "name": "Vedic Varma",
+  "initials": "V",
+  "roles": ["Hi", "I'm Vedic", "A Developer", "A Researcher", "Data Scientist"],
+  "heroImage": "",
+  "resumeUrl": "/resume.pdf",
+  "nav": [
+    { "label": "Portfolio", "href": "#projects" },
+    { "label": "Resume", "href": "/resume" },
+    { "label": "Contact", "href": "#contact" }
+  ]
+}

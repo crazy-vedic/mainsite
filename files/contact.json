@@ -1,0 +1,11 @@
+{
+  "email": "vedic20052005@gmail.com",
+  "formspreeEndpoint": "https://formspree.io/f/REPLACE_WITH_YOUR_FORM_ID",
+  "formIntro": "Please contact me for any collaboration regarding research or projects.",
+  "socials": [
+    { "platform": "github", "url": "https://github.com/REPLACE_ME" },
+    { "platform": "whatsapp", "url": "https://wa.me/REPLACE_WITH_NUMBER" }
+  ],
+  "footerName": "Vedic",
+  "footerNote": "All rights reserved."
+}
