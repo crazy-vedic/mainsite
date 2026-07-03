@@ -33,7 +33,7 @@ app.use('/api/students', require('./backend/studentManagement'));
 app.use(express.static(path.join(__dirname, 'frontend', 'src')));
 app.use(express.static(path.join(__dirname, 'frontend', 'build')));
 app.use(express.static(path.join(__dirname, 'backend','assets')));
-app.get('*', (req, res) => {
+app.get('/{*splat}', (req, res) => {
   res.sendFile(path.join(__dirname, 'frontend', 'build', 'index.html'));
 });
 
