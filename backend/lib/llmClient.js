@@ -26,6 +26,8 @@ async function askLLM({ systemPrompt, history, message }) {
       messages,
       stream: false,
       temperature: 0.3,
+      max_tokens: 200, // <-- CRITICAL: Clamp the max length so it physically cannot loop past 150 tokens
+      stop: ["<|im_end|>", "<|endoftext|>", "User:", "Assistant:"] // <-- Force kill the generation loop
     }),
   });
 
