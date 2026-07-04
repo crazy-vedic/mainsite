@@ -20,7 +20,32 @@ function writeSse(res, payload) {
   res.write(`data: ${JSON.stringify(payload)}\n\n`);
 }
 
+function isAbortError(err) {
+  return err?.name === 'AbortError' || err?.code === 'ABORT_ERR';
+}
+
+function listenForClientDisconnect(req, res, onDisconnect) {
+  const handleDisconnect = () => {
+    if (!res.writableFinished) {
+      onDisconnect();
+    }
+  };
+
+  req.on('close', handleDisconnect);
+  req.on('aborted', handleDisconnect);
+
+  return () => {
+    req.off('close', handleDisconnect);
+    req.off('aborted', handleDisconnect);
+  };
+}
+
 router.post('/', chatLimiter, async (req, res) => {
+  const abortController = new AbortController();
+  const stopListening = listenForClientDisconnect(req, res, () => {
+    abortController.abort();
+  });
+
   try {
     const { message, history } = req.body || {};
 
@@ -55,11 +80,22 @@ router.post('/', chatLimiter, async (req, res) => {
       systemPrompt,
       history: trimmedHistory,
       message: message.trim(),
+      signal: abortController.signal,
       onDelta: (delta) => {
+        if (abortController.signal.aborted || res.writableEnded) return;
+
         reply += delta;
-        writeSse(res, { delta });
+        try {
+          writeSse(res, { delta });
+        } catch {
+          abortController.abort();
+        }
       },
     });
+
+    if (abortController.signal.aborted) {
+      return;
+    }
 
     if (!reply.trim()) {
       writeSse(res, { error: 'LLM returned an empty response' });
@@ -69,14 +105,25 @@ router.post('/', chatLimiter, async (req, res) => {
     writeSse(res, { done: true, reply: reply.trim() });
     res.end();
   } catch (err) {
+    if (isAbortError(err) || abortController.signal.aborted) {
+      return;
+    }
+
     console.error('POST /api/chat error:', err.message);
 
     if (res.headersSent) {
-      writeSse(res, { error: 'Failed to get a response from the assistant.' });
-      return res.end();
+      try {
+        writeSse(res, { error: 'Failed to get a response from the assistant.' });
+        res.end();
+      } catch {
+        abortController.abort();
+      }
+      return;
     }
 
     res.status(502).json({ error: 'Failed to get a response from the assistant.' });
+  } finally {
+    stopListening();
   }
 });
 

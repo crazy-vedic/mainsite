@@ -530,41 +530,53 @@ function ContactSection({ contact }) {
 
 const CHAT_HISTORY_LIMIT = 5;
 
-async function readChatStream(response, onDelta) {
+async function readChatStream(response, onDelta, signal) {
   const reader = response.body.getReader();
   const decoder = new TextDecoder();
   let buffer = '';
 
-  while (true) {
-    const { done, value } = await reader.read();
-    if (done) break;
-
-    buffer += decoder.decode(value, { stream: true });
-    const events = buffer.split('\n\n');
-    buffer = events.pop() || '';
-
-    for (const event of events) {
-      const line = event.split('\n').find((entry) => entry.startsWith('data: '));
-      if (!line) continue;
-
-      const payload = line.slice(6).trim();
-      if (!payload) continue;
-
-      let data;
-      try {
-        data = JSON.parse(payload);
-      } catch {
-        continue;
+  try {
+    while (true) {
+      if (signal?.aborted) {
+        throw new DOMException('Aborted', 'AbortError');
       }
 
-      if (data.error) {
-        throw new Error(data.error);
-      }
+      const { done, value } = await reader.read();
+      if (done) break;
 
-      if (data.delta) {
-        onDelta(data.delta);
+      buffer += decoder.decode(value, { stream: true });
+      const events = buffer.split('\n\n');
+      buffer = events.pop() || '';
+
+      for (const event of events) {
+        if (signal?.aborted) {
+          throw new DOMException('Aborted', 'AbortError');
+        }
+
+        const line = event.split('\n').find((entry) => entry.startsWith('data: '));
+        if (!line) continue;
+
+        const payload = line.slice(6).trim();
+        if (!payload) continue;
+
+        let data;
+        try {
+          data = JSON.parse(payload);
+        } catch {
+          continue;
+        }
+
+        if (data.error) {
+          throw new Error(data.error);
+        }
+
+        if (data.delta) {
+          onDelta(data.delta);
+        }
       }
     }
+  } finally {
+    reader.cancel().catch(() => {});
   }
 }
 
@@ -576,6 +588,9 @@ function ChatWidget({ config, name, variant = 'floating' }) {
   const [input, setInput] = useState('');
   const [sending, setSending] = useState(false);
   const listRef = useRef(null);
+  const abortRef = useRef(null);
+
+  useEffect(() => () => abortRef.current?.abort(), []);
 
   useEffect(() => {
     if ((isInline || open) && messages.length === 0) {
@@ -598,6 +613,10 @@ function ChatWidget({ config, name, variant = 'floating' }) {
       .map(({ role, content }) => ({ role, content }))
       .slice(-CHAT_HISTORY_LIMIT);
 
+    abortRef.current?.abort();
+    const controller = new AbortController();
+    abortRef.current = controller;
+
     setMessages((m) => [...m, { role: 'user', content: text }, { role: 'assistant', content: '' }]);
     setInput('');
     setSending(true);
@@ -607,18 +626,23 @@ function ChatWidget({ config, name, variant = 'floating' }) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ message: text, history }),
+        signal: controller.signal,
       });
       if (!res.ok) throw new Error('bad response');
 
       let reply = '';
-      await readChatStream(res, (delta) => {
-        reply += delta;
-        setMessages((m) => {
-          const next = [...m];
-          next[next.length - 1] = { role: 'assistant', content: reply };
-          return next;
-        });
-      });
+      await readChatStream(
+        res,
+        (delta) => {
+          reply += delta;
+          setMessages((m) => {
+            const next = [...m];
+            next[next.length - 1] = { role: 'assistant', content: reply };
+            return next;
+          });
+        },
+        controller.signal,
+      );
 
       if (!reply.trim()) {
         setMessages((m) => {
@@ -627,7 +651,19 @@ function ChatWidget({ config, name, variant = 'floating' }) {
           return next;
         });
       }
-    } catch {
+    } catch (err) {
+      if (err.name === 'AbortError') {
+        setMessages((m) => {
+          const next = [...m];
+          const last = next[next.length - 1];
+          if (last?.role === 'assistant' && !last.content) {
+            next.pop();
+          }
+          return next;
+        });
+        return;
+      }
+
       setMessages((m) => {
         const next = [...m];
         const last = next[next.length - 1];

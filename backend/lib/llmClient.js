@@ -30,40 +30,56 @@ function buildRequestBody({ model, messages, stream }) {
   };
 }
 
-async function parseSseStream(readable, onDelta) {
+function throwIfAborted(signal) {
+  if (signal?.aborted) {
+    const err = new Error('Request aborted');
+    err.name = 'AbortError';
+    throw err;
+  }
+}
+
+async function parseSseStream(readable, onDelta, signal) {
   const reader = readable.getReader();
   const decoder = new TextDecoder();
   let buffer = '';
 
-  while (true) {
-    const { done, value } = await reader.read();
-    if (done) break;
+  try {
+    while (true) {
+      throwIfAborted(signal);
 
-    buffer += decoder.decode(value, { stream: true });
-    const events = buffer.split('\n\n');
-    buffer = events.pop() || '';
+      const { done, value } = await reader.read();
+      if (done) break;
 
-    for (const event of events) {
-      const line = event.split('\n').find((entry) => entry.startsWith('data: '));
-      if (!line) continue;
+      buffer += decoder.decode(value, { stream: true });
+      const events = buffer.split('\n\n');
+      buffer = events.pop() || '';
 
-      const payload = line.slice(6).trim();
-      if (!payload || payload === '[DONE]') continue;
+      for (const event of events) {
+        throwIfAborted(signal);
 
-      let data;
-      try {
-        data = JSON.parse(payload);
-      } catch {
-        continue;
+        const line = event.split('\n').find((entry) => entry.startsWith('data: '));
+        if (!line) continue;
+
+        const payload = line.slice(6).trim();
+        if (!payload || payload === '[DONE]') continue;
+
+        let data;
+        try {
+          data = JSON.parse(payload);
+        } catch {
+          continue;
+        }
+
+        const delta = data.choices?.[0]?.delta?.content;
+        if (delta) onDelta(delta);
       }
-
-      const delta = data.choices?.[0]?.delta?.content;
-      if (delta) onDelta(delta);
     }
+  } finally {
+    reader.cancel().catch(() => {});
   }
 }
 
-async function streamLLM({ systemPrompt, history, message, onDelta }) {
+async function streamLLM({ systemPrompt, history, message, onDelta, signal }) {
   const { baseUrl, model, apiKey } = getLlmConfig();
   const messages = buildMessages({ systemPrompt, history, message });
 
@@ -76,6 +92,7 @@ async function streamLLM({ systemPrompt, history, message, onDelta }) {
     method: 'POST',
     headers,
     body: JSON.stringify(buildRequestBody({ model, messages, stream: true })),
+    signal,
   });
 
   if (!response.ok) {
@@ -87,7 +104,7 @@ async function streamLLM({ systemPrompt, history, message, onDelta }) {
     throw new Error('LLM returned an empty stream');
   }
 
-  await parseSseStream(response.body, onDelta);
+  await parseSseStream(response.body, onDelta, signal);
 }
 
 module.exports = { streamLLM };
