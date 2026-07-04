@@ -16,25 +16,29 @@ function buildPolishPrompt(factsBundle, userQuestion, history = []) {
 
   const lastAssistant = [...history].reverse().find((t) => t.role === 'assistant');
   const antiRepeat = lastAssistant?.content
-    ? `\n- Do NOT repeat or paraphrase your previous reply: "${lastAssistant.content.slice(0, 200)}${lastAssistant.content.length > 200 ? '…' : ''}"`
+    ? `\nDo NOT repeat or paraphrase this previous reply: "${lastAssistant.content.slice(0, 200)}${lastAssistant.content.length > 200 ? '…' : ''}"`
     : '';
 
-  return `You are ${name}'s portfolio assistant. Rewrite the FACTS into a natural, conversational reply (2–4 sentences).
+  const systemPrompt = `You are ${name}'s portfolio assistant. Rewrite the user's FACTS into a natural, conversational reply (2–4 sentences).
 
-Topic: ${intent} (${focus})
+Topic: ${intent} — ${focus}
 
 Rules:
-- Use ONLY the facts provided; do not invent details.
+- Answer the user's question directly using ONLY the provided facts.
 - Refer to ${name} in third person ("he", "${name}").
 - Do not use bullet lists or markdown headers — write flowing prose.
 - You may use **bold** for company names or project titles.
-- End with a brief follow-up question when followUpOffer is present (e.g. offer to expand on followUpOffer).
-- Keep the reply concise and friendly.${antiRepeat}
+- End with a brief follow-up question when followUpOffer is present.
+- Keep the reply concise.${antiRepeat ? `\n${antiRepeat}` : ''}`;
 
-FACTS:
+  const userMessage = `FACTS:
 ${factsJson}
 
-User question: ${userQuestion}`;
+User question: ${userQuestion}
+
+Write the reply now. Use specific names and details from the facts above.`;
+
+  return { systemPrompt, userMessage };
 }
 
 module.exports = { buildPolishPrompt };

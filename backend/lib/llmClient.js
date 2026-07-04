@@ -19,8 +19,15 @@ function getLlmConfig() {
   };
 }
 
-function buildRequestBody({ model, messages, stream, temperature = 0.2, max_tokens = 150 }) {
-  return {
+function buildRequestBody({
+  model,
+  messages,
+  stream,
+  temperature = 0.2,
+  max_tokens = 150,
+  cache_prompt,
+}) {
+  const body = {
     model,
     messages,
     stream,
@@ -30,6 +37,12 @@ function buildRequestBody({ model, messages, stream, temperature = 0.2, max_toke
     presence_penalty: 0.3,
     stop: ['<|im_end|>', '<|endoftext|>', 'User:', 'Assistant:'],
   };
+
+  if (cache_prompt === false) {
+    body.cache_prompt = false;
+  }
+
+  return body;
 }
 
 function throwIfAborted(signal) {
@@ -109,11 +122,11 @@ async function streamLLM({ systemPrompt, history, message, onDelta, signal }) {
   await parseSseStream(response.body, onDelta, signal);
 }
 
-async function streamPolish({ systemPrompt, message, onDelta, signal }) {
+async function streamPolish({ systemPrompt, userMessage, onDelta, signal }) {
   const { baseUrl, model, apiKey } = getLlmConfig();
   const messages = [
     { role: 'system', content: systemPrompt },
-    { role: 'user', content: message },
+    { role: 'user', content: userMessage },
   ];
 
   const headers = { 'Content-Type': 'application/json' };
@@ -125,7 +138,14 @@ async function streamPolish({ systemPrompt, message, onDelta, signal }) {
     method: 'POST',
     headers,
     body: JSON.stringify(
-      buildRequestBody({ model, messages, stream: true, temperature: 0.4, max_tokens: 180 }),
+      buildRequestBody({
+        model,
+        messages,
+        stream: true,
+        temperature: 0.2,
+        max_tokens: 180,
+        cache_prompt: false,
+      }),
     ),
     signal,
   });

@@ -31,25 +31,68 @@ function isDuplicateOfPrevious(reply, history) {
   return probe.length >= 40 && longer.includes(probe);
 }
 
+const GENERIC_REPLY_RE =
+  /^(hi|hello|hey)\b[!.,\s]*(how can i (assist|help)|what can i do|how may i help)/i;
+
+function factNeedles(fact) {
+  const needles = [];
+  if (fact.title) needles.push(fact.title);
+  if (fact.company) needles.push(fact.company);
+  if (fact.category) needles.push(fact.category);
+  if (fact.role) needles.push(fact.role);
+  if (fact.name) needles.push(fact.name);
+  if (fact.text) needles.push(fact.text);
+  if (fact.value) needles.push(fact.value);
+  if (fact.label) needles.push(fact.label);
+  if (Array.isArray(fact.items)) {
+    needles.push(...fact.items.slice(0, 3));
+  }
+  if (Array.isArray(fact.stack)) {
+    needles.push(...fact.stack.slice(0, 2));
+  }
+  return needles;
+}
+
+function replyReferencesFacts(reply, facts) {
+  const lower = reply.toLowerCase();
+  return facts.some((fact) =>
+    factNeedles(fact).some((needle) => {
+      const text = String(needle).toLowerCase();
+      const words = text.split(/\s+/).filter((word) => word.length >= 4);
+      if (words.length) {
+        return words.some((word) => lower.includes(word));
+      }
+      return text.length >= 4 && lower.includes(text);
+    }),
+  );
+}
+
+function isWeakPolishReply(reply, factsBundle) {
+  const trimmed = (reply || '').trim();
+  if (!trimmed) return true;
+  if (GENERIC_REPLY_RE.test(trimmed)) return true;
+  if (/how can i (assist|help) you today/i.test(trimmed)) return true;
+
+  const facts = factsBundle?.facts || [];
+  if (!facts.length) return false;
+
+  return !replyReferencesFacts(trimmed, facts);
+}
+
 function streamText(text, onDelta) {
   if (text && onDelta) onDelta(text);
 }
 
 async function tryPolish(factsBundle, message, history, onDelta, signal) {
-  const systemPrompt = buildPolishPrompt(factsBundle, message, history);
+  const { systemPrompt, userMessage } = buildPolishPrompt(factsBundle, message, history);
   let buffered = '';
-  let streamed = false;
 
   const polishPromise = streamPolish({
     systemPrompt,
-    message,
+    userMessage,
     signal,
     onDelta: (delta) => {
       buffered += delta;
-      if (delta && onDelta) {
-        streamed = true;
-        onDelta(delta);
-      }
     },
   });
 
@@ -63,18 +106,29 @@ async function tryPolish(factsBundle, message, history, onDelta, signal) {
     clearTimeout(timeoutId);
     const trimmed = buffered.trim();
 
-    if (trimmed && isDuplicateOfPrevious(trimmed, history)) {
-      if (streamed) return trimmed;
+    if (!trimmed) {
+      console.log('[polish] rejected: empty response');
       return null;
     }
 
-    return trimmed || null;
+    if (isDuplicateOfPrevious(trimmed, history)) {
+      console.log('[polish] rejected: duplicate of previous reply');
+      return null;
+    }
+
+    if (isWeakPolishReply(trimmed, factsBundle)) {
+      console.log('[polish] rejected: generic or missing facts', { reply: trimmed.slice(0, 120) });
+      return null;
+    }
+
+    console.log('[polish] accepted', { intent: factsBundle.intent, reply: trimmed.slice(0, 120) });
+    if (onDelta) streamText(trimmed, onDelta);
+    return trimmed;
   } catch (err) {
     clearTimeout(timeoutId);
     if (err.name === 'AbortError' || signal?.aborted) throw err;
 
-    const trimmed = buffered.trim();
-    if (streamed && trimmed) return trimmed;
+    console.log('[polish] rejected:', err.message);
     return null;
   }
 }
@@ -122,6 +176,7 @@ async function resolveChatResponse({ message, content, history, signal, onDelta 
     return { reply: polished, links, source };
   }
 
+  console.log('[chat] polish unavailable, using fallback', { intent: factsBundle.intent });
   reply = '';
   source = 'template';
   const fallback = formatFallback(intent, factsBundle.tier, content, factsBundle, message);
