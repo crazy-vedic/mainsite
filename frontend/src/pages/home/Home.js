@@ -533,6 +533,22 @@ function ContactSection({ contact }) {
 
 const CHAT_HISTORY_LIMIT = 5;
 
+function buildChatHistory(messages, greeting) {
+  const turns = messages
+    .filter((m) => m.content?.trim())
+    .map(({ role, content }) => ({ role, content }));
+
+  if (
+    turns.length &&
+    turns[0].role === 'assistant' &&
+    (!greeting || turns[0].content === greeting)
+  ) {
+    turns.shift();
+  }
+
+  return turns.slice(-CHAT_HISTORY_LIMIT);
+}
+
 function formatRateLimitMessage(seconds) {
   return `Please wait ${seconds} second${seconds === 1 ? '' : 's'} before sending another message.`;
 }
@@ -802,9 +818,7 @@ function ChatWidget({ config, name, variant = 'floating' }) {
     setStreamComplete(false);
     resetStream();
 
-    const history = messages
-      .map(({ role, content }) => ({ role, content }))
-      .slice(-CHAT_HISTORY_LIMIT);
+    const history = buildChatHistory(messages, config?.greeting);
 
     abortRef.current?.abort();
     const controller = new AbortController();

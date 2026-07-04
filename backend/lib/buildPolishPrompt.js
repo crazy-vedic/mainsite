@@ -25,6 +25,7 @@ Topic: ${intent} — ${focus}
 
 Rules:
 - Answer the user's question directly using ONLY the provided facts.
+- Do NOT repeat the portfolio greeting ("I'm an AI assistant...").
 - Refer to ${name} in third person ("he", "${name}").
 - Do not use bullet lists or markdown headers — write flowing prose.
 - You may use **bold** for company names or project titles.
@@ -36,7 +37,9 @@ ${factsJson}
 
 User question: ${userQuestion}
 
-Write the reply now. Use specific names and details from the facts above.`;
+Write the reply now. Use specific names and details from the facts above.
+
+[ref:${Date.now()}]`;
 
   return { systemPrompt, userMessage };
 }

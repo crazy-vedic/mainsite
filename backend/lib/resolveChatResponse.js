@@ -14,6 +14,23 @@ function normalizeForCompare(text) {
     .trim();
 }
 
+function sanitizeChatHistory(history) {
+  const turns = (history || []).filter(
+    (turn) =>
+      turn &&
+      (turn.role === 'user' || turn.role === 'assistant') &&
+      typeof turn.content === 'string' &&
+      turn.content.trim(),
+  );
+
+  const sanitized = [...turns];
+  while (sanitized.length && sanitized[0].role === 'assistant') {
+    sanitized.shift();
+  }
+
+  return sanitized;
+}
+
 function getLastTurnPair(history) {
   const turns = history || [];
   let lastAssistant = null;
@@ -78,8 +95,8 @@ function replySimilarity(current, previous) {
 
 function isDuplicateOfPrevious(reply, message, history, content) {
   const { lastAssistant, precedingUser } = getLastTurnPair(history);
-  if (!lastAssistant?.content || !reply) {
-    return { duplicate: false, reason: 'no_previous_reply' };
+  if (!lastAssistant?.content || !precedingUser?.content || !reply) {
+    return { duplicate: false, reason: 'no_real_previous_turn' };
   }
 
   const previousReply = lastAssistant.content;
@@ -143,6 +160,9 @@ function isDuplicateOfPrevious(reply, message, history, content) {
 const GENERIC_REPLY_RE =
   /^(hi|hello|hey)\b[!.,\s]*(how can i (assist|help)|what can i do|how may i help)/i;
 
+const GREETING_ECHO_RE =
+  /\bi'?m an ai assistant\b|\bask me anything about (?:his|her|their) work\b|\bportfolio assistant\b/i;
+
 function factNeedles(fact) {
   const needles = [];
   if (fact.title) needles.push(fact.title);
@@ -180,6 +200,7 @@ function isWeakPolishReply(reply, factsBundle) {
   const trimmed = (reply || '').trim();
   if (!trimmed) return true;
   if (GENERIC_REPLY_RE.test(trimmed)) return true;
+  if (GREETING_ECHO_RE.test(trimmed)) return true;
   if (/how can i (assist|help) you today/i.test(trimmed)) return true;
 
   const facts = factsBundle?.facts || [];
@@ -220,14 +241,14 @@ async function tryPolish(factsBundle, message, history, content, onDelta, signal
       return null;
     }
 
-    const duplicateCheck = isDuplicateOfPrevious(trimmed, message, history, content);
-    if (duplicateCheck.duplicate) {
-      console.log('[polish] rejected: duplicate of previous reply', duplicateCheck);
+    if (isWeakPolishReply(trimmed, factsBundle)) {
+      console.log('[polish] rejected: generic or missing facts', { reply: trimmed.slice(0, 120) });
       return null;
     }
 
-    if (isWeakPolishReply(trimmed, factsBundle)) {
-      console.log('[polish] rejected: generic or missing facts', { reply: trimmed.slice(0, 120) });
+    const duplicateCheck = isDuplicateOfPrevious(trimmed, message, history, content);
+    if (duplicateCheck.duplicate) {
+      console.log('[polish] rejected: duplicate of previous reply', duplicateCheck);
       return null;
     }
 
@@ -244,6 +265,7 @@ async function tryPolish(factsBundle, message, history, content, onDelta, signal
 }
 
 async function resolveChatResponse({ message, content, history, signal, onDelta }) {
+  const chatHistory = sanitizeChatHistory(history);
   const intent = detectIntent(message, content);
 
   if (!intent) {
@@ -252,7 +274,7 @@ async function resolveChatResponse({ message, content, history, signal, onDelta 
 
     await streamLLM({
       systemPrompt,
-      history: (history || []).slice(-2),
+      history: chatHistory.slice(-2),
       message,
       signal,
       onDelta: (delta) => {
@@ -268,8 +290,8 @@ async function resolveChatResponse({ message, content, history, signal, onDelta 
     };
   }
 
-  const modifiers = detectModifiers(message, history);
-  const factsBundle = gatherFacts(message, content, history, intent, modifiers);
+  const modifiers = detectModifiers(message, chatHistory);
+  const factsBundle = gatherFacts(message, content, chatHistory, intent, modifiers);
   const links = suggestSectionLinks(intent, content);
 
   let reply = '';
@@ -280,7 +302,7 @@ async function resolveChatResponse({ message, content, history, signal, onDelta 
     onDelta(delta);
   };
 
-  const polished = await tryPolish(factsBundle, message, history, content, captureDelta, signal);
+  const polished = await tryPolish(factsBundle, message, chatHistory, content, captureDelta, signal);
 
   if (polished) {
     return { reply: polished, links, source };
@@ -296,7 +318,7 @@ async function resolveChatResponse({ message, content, history, signal, onDelta 
     const systemPrompt = buildSystemPrompt(content, intent);
     await streamLLM({
       systemPrompt,
-      history: (history || []).slice(-2),
+      history: chatHistory.slice(-2),
       message,
       signal,
       onDelta: captureDelta,
@@ -312,4 +334,4 @@ async function resolveChatResponse({ message, content, history, signal, onDelta 
   };
 }
 
-module.exports = { resolveChatResponse, isDuplicateOfPrevious };
+module.exports = { resolveChatResponse, isDuplicateOfPrevious, sanitizeChatHistory };
