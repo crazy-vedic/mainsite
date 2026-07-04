@@ -4,10 +4,9 @@
  */
 
 async function askLLM({ systemPrompt, history, message }) {
-  const baseUrl = (process.env.LLM_API_URL || 'http://localhost:11434').replace(/\/$/, '');
-  const model = process.env.LLM_MODEL || 'llama3.1';
+  const baseUrl = (process.env.LLM_API_URL || 'http://localhost:8192').replace(/\/$/, '');
+  const model = process.env.LLM_MODEL || 'qwen2.5-0.5b';
   const apiKey = process.env.LLM_API_KEY;
-  console.log(baseUrl, model, apiKey);
   const messages = [
     { role: 'system', content: systemPrompt },
     ...(history || []).filter((m) => m.role === 'user' || m.role === 'assistant'),
@@ -26,6 +25,7 @@ async function askLLM({ systemPrompt, history, message }) {
       model,
       messages,
       stream: false,
+      temperature: 0.3,
     }),
   });
 
