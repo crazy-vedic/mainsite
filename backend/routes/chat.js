@@ -107,7 +107,14 @@ router.post('/', chatLimiter, async (req, res) => {
       return res.end();
     }
 
-    writeSse(res, { done: true, reply: result.reply, links: result.links || [] });
+    const donePayload = {
+      done: true,
+      reply: result.reply,
+      links: result.links || [],
+      source: result.source || 'unknown',
+    };
+    console.log('[chat] response complete', donePayload);
+    writeSse(res, donePayload);
     res.end();
   } catch (err) {
     if (isAbortError(err) || abortController.signal.aborted) {

@@ -715,7 +715,12 @@ async function readChatStream(response, { onDelta, onDone, signal }) {
         }
 
         if (data.done) {
-          onDone?.({ reply: data.reply, links: data.links || [] });
+          await new Promise((resolve) => queueMicrotask(resolve));
+          onDone?.({
+            reply: data.reply,
+            links: data.links || [],
+            source: data.source,
+          });
         }
       }
     }
@@ -836,7 +841,8 @@ function ChatWidget({ config, name, variant = 'floating' }) {
 
       await readChatStream(res, {
         onDelta: enqueue,
-        onDone: ({ reply, links }) => {
+        onDone: ({ reply, links, source }) => {
+          console.log('[chat] backend response', { source, reply, links });
           finish(reply, links, (finalReply) => {
             setMessages((m) => {
               const next = [...m];

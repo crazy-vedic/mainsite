@@ -43,7 +43,6 @@ export function useAdaptiveStream() {
   const finishRef = useRef(null);
   const finalReplyRef = useRef('');
   const isCompleteRef = useRef(false);
-  const flushModeRef = useRef(false);
   const reducedMotionRef = useRef(prefersReducedMotion());
 
   const clearTimer = useCallback(() => {
@@ -60,7 +59,6 @@ export function useAdaptiveStream() {
     finishRef.current = null;
     finalReplyRef.current = '';
     isCompleteRef.current = false;
-    flushModeRef.current = false;
     setDisplayedText('');
     setDisplayUnits([]);
     setIsStreaming(false);
@@ -100,11 +98,9 @@ export function useAdaptiveStream() {
     }
 
     const backlog = estimateBacklog(queueRef.current, pendingRef.current);
-    let batch = backlog > 80 ? 6 : backlog > 40 ? 4 : backlog > 15 ? 2 : 1;
-
-    if (flushModeRef.current) {
-      batch = Math.max(batch, Math.ceil(backlog / 8));
-    }
+    let batch = 1;
+    if (backlog > 100) batch = 2;
+    if (backlog > 200) batch = 3;
 
     if (reducedMotionRef.current) {
       while (queueRef.current.length) {
@@ -141,7 +137,7 @@ export function useAdaptiveStream() {
 
     const delayMs = reducedMotionRef.current
       ? 0
-      : Math.max(8, 28 - backlog * 0.25);
+      : Math.max(16, 32 - backlog * 0.05);
 
     scheduleDrain(delayMs);
   };
@@ -170,11 +166,6 @@ export function useAdaptiveStream() {
 
       if (links?.length) {
         setSectionLinks(links);
-      }
-
-      const backlog = estimateBacklog(queueRef.current, pendingRef.current);
-      if (backlog > 15) {
-        flushModeRef.current = true;
       }
 
       if (!pendingRef.current && queueRef.current.length === 0 && !timerRef.current) {

@@ -4,7 +4,7 @@ const { buildPolishPrompt } = require('./buildPolishPrompt');
 const { buildSystemPrompt } = require('./buildSystemPrompt');
 const { streamLLM, streamPolish } = require('./llmClient');
 
-const POLISH_TIMEOUT_MS = 8000;
+const POLISH_TIMEOUT_MS = 45000;
 
 function normalizeForCompare(text) {
   return (text || '')
