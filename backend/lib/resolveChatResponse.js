@@ -192,7 +192,7 @@ function streamText(text, onDelta) {
   if (text && onDelta) onDelta(text);
 }
 
-async function tryPolish(factsBundle, message, history, onDelta, signal) {
+async function tryPolish(factsBundle, message, history, content, onDelta, signal) {
   const { systemPrompt, userMessage } = buildPolishPrompt(factsBundle, message, history);
   let buffered = '';
 
@@ -280,7 +280,7 @@ async function resolveChatResponse({ message, content, history, signal, onDelta 
     onDelta(delta);
   };
 
-  const polished = await tryPolish(factsBundle, message, history, captureDelta, signal);
+  const polished = await tryPolish(factsBundle, message, history, content, captureDelta, signal);
 
   if (polished) {
     return { reply: polished, links, source };
