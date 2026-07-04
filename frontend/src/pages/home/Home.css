@@ -116,7 +116,6 @@
   font-weight: 600;
   font-size: clamp(1.75rem, 3vw, 2.5rem);
   margin: 0 0 var(--space-4);
-  scroll-margin-top: var(--space-3);
 }
 
 /* ============================================================
@@ -125,7 +124,7 @@
 
 .hero {
   position: relative;
-  min-height: 100svh;
+  min-height: calc(100svh - var(--site-nav-height, 72px));
   display: flex;
   align-items: center;
   justify-content: center;
@@ -886,7 +885,7 @@
   max-width: 1200px;
   margin: 0 auto;
   padding: clamp(2rem, 6vw, 5rem) clamp(1.25rem, 4vw, 3rem);
-  min-height: 100vh;
+  min-height: calc(100svh - var(--site-nav-height, 72px));
 }
  
 .hero__roles {
