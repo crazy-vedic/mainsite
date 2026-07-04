@@ -1,6 +1,7 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo, useLayoutEffect } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { getClientId } from '../../lib/clientId';
+import { useAdaptiveStream } from '../../lib/streamConsumer';
 import './Home.css';
 
 /* ============================================================
@@ -532,27 +533,32 @@ function ContactSection({ contact }) {
 
 const CHAT_HISTORY_LIMIT = 5;
 
-async function parseRateLimitResponse(response) {
-  let bodyError = null;
+function formatRateLimitMessage(seconds) {
+  return `Please wait ${seconds} second${seconds === 1 ? '' : 's'} before sending another message.`;
+}
 
-  try {
-    const data = await response.json();
-    if (data?.error) bodyError = data.error;
-  } catch {
-    // ignore malformed rate-limit body
-  }
-
+async function parseRateLimitRetryAfter(response) {
   const retryAfter = response.headers.get('Retry-After');
   if (retryAfter) {
     const seconds = parseInt(retryAfter, 10);
     if (!Number.isNaN(seconds) && seconds > 0) {
-      return seconds >= 60
-        ? `Please wait about ${Math.ceil(seconds / 60)} minute before sending another message.`
-        : `Please wait ${seconds} seconds before sending another message.`;
+      return seconds;
     }
   }
 
-  return bodyError || 'Please wait a minute before sending another message.';
+  const reset = response.headers.get('RateLimit-Reset');
+  if (reset) {
+    const resetValue = parseInt(reset, 10);
+    if (!Number.isNaN(resetValue)) {
+      const nowSec = Math.floor(Date.now() / 1000);
+      const seconds = resetValue > nowSec ? resetValue - nowSec : resetValue;
+      if (seconds > 0) {
+        return seconds;
+      }
+    }
+  }
+
+  return 60;
 }
 
 function rollbackFailedSend(setMessages, sentText) {
@@ -579,7 +585,7 @@ function ChatMessageContent({ role, content }) {
   }
 
   return (
-    <div className="chat-markdown">
+    <div className="chat-markdown chat-bubble--settled">
       <ReactMarkdown
         components={{
           a: ({ href, children }) => (
@@ -595,7 +601,53 @@ function ChatMessageContent({ role, content }) {
   );
 }
 
-async function readChatStream(response, onDelta, signal) {
+const TEXT_UNITS = /(\s+|[^\s]+)/g;
+
+function splitTextUnits(text) {
+  if (!text) return [];
+  return text.match(TEXT_UNITS) || [];
+}
+
+function StreamingText({ text }) {
+  const prevCountRef = useRef(0);
+  const units = useMemo(() => splitTextUnits(text), [text]);
+  const animateFrom = prevCountRef.current;
+
+  useLayoutEffect(() => {
+    prevCountRef.current = units.length;
+  }, [units.length]);
+
+  return (
+    <>
+      {units.map((unit, i) => (
+        <span key={i} className={i >= animateFrom ? 'chat-word' : undefined}>
+          {unit}
+        </span>
+      ))}
+    </>
+  );
+}
+
+function StreamingMessage({ content, displayedText, isComplete }) {
+  const [showMarkdown, setShowMarkdown] = useState(false);
+
+  useEffect(() => {
+    if (isComplete && content) {
+      const id = requestAnimationFrame(() => setShowMarkdown(true));
+      return () => cancelAnimationFrame(id);
+    }
+    setShowMarkdown(false);
+    return undefined;
+  }, [isComplete, content]);
+
+  if (showMarkdown && isComplete && content) {
+    return <ChatMessageContent role="assistant" content={content} />;
+  }
+
+  return <StreamingText text={displayedText} />;
+}
+
+async function readChatStream(response, { onDelta, onDone, signal }) {
   const reader = response.body.getReader();
   const decoder = new TextDecoder();
   let buffer = '';
@@ -638,6 +690,10 @@ async function readChatStream(response, onDelta, signal) {
         if (data.delta) {
           onDelta(data.delta);
         }
+
+        if (data.done) {
+          onDone?.({ reply: data.reply, suggestions: data.suggestions || [] });
+        }
       }
     }
   } finally {
@@ -653,10 +709,45 @@ function ChatWidget({ config, name, variant = 'floating' }) {
   const [input, setInput] = useState('');
   const [sending, setSending] = useState(false);
   const [sendError, setSendError] = useState(null);
+  const [rateLimitUntil, setRateLimitUntil] = useState(null);
+  const [, setRateLimitTick] = useState(0);
+  const [streamComplete, setStreamComplete] = useState(false);
   const listRef = useRef(null);
   const abortRef = useRef(null);
 
+  const {
+    enqueue,
+    reset: resetStream,
+    displayedText,
+    isStreaming,
+    isDraining,
+    finish,
+    suggestions,
+    setSuggestions,
+  } = useAdaptiveStream();
+
   useEffect(() => () => abortRef.current?.abort(), []);
+
+  useEffect(() => {
+    if (!rateLimitUntil) return undefined;
+
+    const tick = () => {
+      if (Date.now() >= rateLimitUntil) {
+        setRateLimitUntil(null);
+        return;
+      }
+      setRateLimitTick((n) => n + 1);
+    };
+
+    tick();
+    const id = setInterval(tick, 1000);
+    return () => clearInterval(id);
+  }, [rateLimitUntil]);
+
+  const rateLimitSecondsLeft = rateLimitUntil
+    ? Math.max(0, Math.ceil((rateLimitUntil - Date.now()) / 1000))
+    : 0;
+  const isRateLimited = rateLimitSecondsLeft > 0;
 
   useEffect(() => {
     if ((isInline || open) && messages.length === 0) {
@@ -669,13 +760,18 @@ function ChatWidget({ config, name, variant = 'floating' }) {
 
   useEffect(() => {
     listRef.current?.scrollTo({ top: listRef.current.scrollHeight, behavior: 'smooth' });
-  }, [messages, sending]);
+  }, [messages, sending, displayedText]);
+
+  const isStreamActive = sending || isStreaming || isDraining;
 
   const send = useCallback(async () => {
     const text = input.trim();
-    if (!text || sending) return;
+    if (!text || sending || isRateLimited) return;
 
     setSendError(null);
+    setSuggestions([]);
+    setStreamComplete(false);
+    resetStream();
 
     const history = messages
       .map(({ role, content }) => ({ role, content }))
@@ -704,34 +800,36 @@ function ChatWidget({ config, name, variant = 'floating' }) {
       });
 
       if (res.status === 429) {
-        throw new Error(await parseRateLimitResponse(res));
+        const retryAfter = await parseRateLimitRetryAfter(res);
+        setRateLimitUntil(Date.now() + retryAfter * 1000);
+        rollbackFailedSend(setMessages, text);
+        resetStream();
+        setInput(text);
+        return;
       }
 
       if (!res.ok) throw new Error('bad response');
 
-      let reply = '';
-      await readChatStream(
-        res,
-        (delta) => {
-          reply += delta;
-          setMessages((m) => {
-            const next = [...m];
-            next[next.length - 1] = { role: 'assistant', content: reply };
-            return next;
+      await readChatStream(res, {
+        onDelta: enqueue,
+        onDone: ({ reply, suggestions: chips }) => {
+          finish(reply, chips, (finalReply) => {
+            setMessages((m) => {
+              const next = [...m];
+              next[next.length - 1] = {
+                role: 'assistant',
+                content: finalReply || "I couldn't find an answer to that.",
+              };
+              return next;
+            });
+            setStreamComplete(true);
           });
         },
-        controller.signal,
-      );
-
-      if (!reply.trim()) {
-        setMessages((m) => {
-          const next = [...m];
-          next[next.length - 1] = { role: 'assistant', content: "I couldn't find an answer to that." };
-          return next;
-        });
-      }
+        signal: controller.signal,
+      });
     } catch (err) {
       if (err.name === 'AbortError') {
+        resetStream();
         setMessages((m) => {
           const next = [...m];
           const last = next[next.length - 1];
@@ -743,6 +841,7 @@ function ChatWidget({ config, name, variant = 'floating' }) {
         return;
       }
 
+      resetStream();
       rollbackFailedSend(setMessages, text);
       setInput(text);
       setSendError(
@@ -753,7 +852,16 @@ function ChatWidget({ config, name, variant = 'floating' }) {
     } finally {
       setSending(false);
     }
-  }, [input, sending, messages]);
+  }, [
+    input,
+    sending,
+    messages,
+    isRateLimited,
+    enqueue,
+    finish,
+    resetStream,
+    setSuggestions,
+  ]);
 
   const handleKeyDown = (e) => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -763,7 +871,19 @@ function ChatWidget({ config, name, variant = 'floating' }) {
     if (e.key === 'Escape' && !isInline) setOpen(false);
   };
 
+  const handleChipClick = (chip) => {
+    setInput(chip);
+    setSuggestions([]);
+  };
+
   if (!enabled) return null;
+
+  const lastIndex = messages.length - 1;
+  const showTyping =
+    isStreamActive &&
+    messages[lastIndex]?.role === 'assistant' &&
+    !messages[lastIndex]?.content &&
+    !displayedText;
 
   const panel = (
     <div className={`chat-panel ${isInline ? 'chat-panel--inline' : ''}`} role="dialog" aria-label={config?.title || 'Chat'}>
@@ -778,27 +898,62 @@ function ChatWidget({ config, name, variant = 'floating' }) {
 
       <div className="chat-panel__messages" ref={listRef}>
         {messages.map((m, i) => {
-          if (sending && i === messages.length - 1 && m.role === 'assistant' && !m.content) {
+          const isLastAssistant = i === lastIndex && m.role === 'assistant';
+          const showStreamingBubble =
+            isLastAssistant && isStreamActive && (displayedText || !showTyping);
+
+          if (showStreamingBubble) {
+            return (
+              <div
+                key={i}
+                className="chat-bubble chat-bubble--assistant chat-bubble--streaming"
+                aria-live="polite"
+              >
+                <StreamingMessage
+                  content={m.content}
+                  displayedText={displayedText}
+                  isComplete={streamComplete && !isDraining}
+                />
+              </div>
+            );
+          }
+
+          if (isStreamActive && isLastAssistant && !m.content) {
             return null;
           }
+
           return (
             <div key={i} className={`chat-bubble chat-bubble--${m.role}`}>
               <ChatMessageContent role={m.role} content={m.content} />
             </div>
           );
         })}
-        {sending && messages[messages.length - 1]?.content === '' && (
+        {showTyping && (
           <div className="chat-bubble chat-bubble--assistant chat-bubble--typing" aria-live="polite">
             <span />
             <span />
             <span />
           </div>
         )}
+        {suggestions.length > 0 && !isStreamActive && (
+          <div className="chat-suggestions" role="group" aria-label="Suggested questions">
+            {suggestions.map((chip) => (
+              <button
+                key={chip}
+                type="button"
+                className="chat-suggestion-chip"
+                onClick={() => handleChipClick(chip)}
+              >
+                {chip}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
-      {sendError && (
-        <p className="chat-panel__error" role="alert">
-          {sendError}
+      {(sendError || isRateLimited) && (
+        <p className="chat-panel__error" role="alert" aria-live="polite">
+          {isRateLimited ? formatRateLimitMessage(rateLimitSecondsLeft) : sendError}
         </p>
       )}
 
@@ -810,7 +965,12 @@ function ChatWidget({ config, name, variant = 'floating' }) {
           placeholder={config?.placeholder || 'Ask something…'}
           rows={1}
         />
-        <button type="button" onClick={send} disabled={sending || !input.trim()} aria-label="Send message">
+        <button
+          type="button"
+          onClick={send}
+          disabled={sending || isRateLimited || !input.trim()}
+          aria-label="Send message"
+        >
           <IconSend />
         </button>
       </div>

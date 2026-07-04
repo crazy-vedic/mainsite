@@ -712,6 +712,58 @@
   30% { transform: translateY(-4px); opacity: 1; }
 }
 
+.chat-bubble--streaming {
+  /* streaming assistant bubble — word animation handled by .chat-word */
+}
+
+.chat-bubble--settled {
+  animation: chatSettle 150ms ease forwards;
+}
+
+@keyframes chatSettle {
+  from { opacity: 0.92; }
+  to { opacity: 1; }
+}
+
+.chat-word {
+  display: inline;
+  opacity: 0;
+  transform: translateY(3px);
+  animation: chatWordIn 220ms ease forwards;
+}
+
+@keyframes chatWordIn {
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.chat-suggestions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-self: flex-start;
+  max-width: 95%;
+  margin-top: 2px;
+}
+
+.chat-suggestion-chip {
+  background: transparent;
+  border: 1px solid var(--surface-border-hover);
+  border-radius: 999px;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-family: var(--font-body);
+  font-size: 0.78rem;
+  line-height: 1.2;
+  padding: 5px 10px;
+  transition: border-color 150ms ease, color 150ms ease, background 150ms ease;
+}
+
+.chat-suggestion-chip:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: var(--accent-soft);
+}
+
 .chat-panel__error {
   margin: 0;
   padding: 0 var(--space-2) var(--space-1);
@@ -792,12 +844,19 @@
 @media (prefers-reduced-motion: reduce) {
   .caret,
   .chat-bubble--typing span,
+  .chat-word,
+  .chat-bubble--settled,
   .hero__content {
     animation: none !important;
   }
+  .chat-word {
+    opacity: 1;
+    transform: none;
+  }
   .project-card,
   .hero__scroll,
-  .chat-widget__toggle {
+  .chat-widget__toggle,
+  .chat-suggestion-chip {
     transition: none !important;
   }
 }

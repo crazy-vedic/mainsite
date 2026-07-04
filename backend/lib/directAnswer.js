@@ -15,7 +15,8 @@ function detectIntent(message, content = {}) {
   if (/\b(everything|tell me about|who is vedic|introduce|about vedic)\b/.test(q)) return 'about';
   if (/\b(exper|works?|work history|work exp|jobs?|internships?|career|employ|where (has|did) he work)\b/.test(q)) {
     return 'experience';
-  }  if (/\b(certif|gate qualified|ibm data|google cloud)\b/.test(q)) return 'certifications';
+  }
+  if (/\b(certif|gate qualified|ibm data|google cloud)\b/.test(q)) return 'certifications';
   if (/\b(skills?|tech stack|technologies|languages|frameworks|what (can|does) he know)\b/.test(q)) {
     return 'skills';
   }
@@ -25,101 +26,159 @@ function detectIntent(message, content = {}) {
   return null;
 }
 
-function formatExperience(experience, name) {
-  if (!experience?.length) return `I don't have work experience listed for ${name}.`;
+function detectModifiers(message, history = []) {
+  const q = message.toLowerCase();
 
-  const lines = experience.map((e) => {
-    const period = `${e.start}–${e.end}`;
-    const bullet = e.bullets?.[0] ? ` ${e.bullets[0]}` : '';
-    return `- **${e.role}** at ${e.company} (${period}, ${e.location || 'remote'}) —${bullet}`;
-  });
+  const recent = /\b(recent|latest|current|most recent|last role)\b/.test(q);
+  const all = /\b(all|full|complete|entire|whole|resume|timeline|every)\b/.test(q);
+  const followUp = /\b(tell me more|go on|what else|expand|more detail|continue|keep going)\b/.test(q);
 
-  return `${name}'s work experience:\n\n${lines.join('\n')}`;
+  return { recent, all, followUp };
 }
 
-function formatProjects(projects, name) {
-  if (!projects?.length) return `I don't have projects listed for ${name}.`;
-
-  const lines = projects.slice(0, 7).map((p) => {
-    const stack = p.stack?.length ? ` (${p.stack.slice(0, 4).join(', ')})` : '';
-    return `- **${p.title}** — ${p.description}${stack}`;
-  });
-
-  return `${name}'s projects:\n\n${lines.join('\n')}`;
+function introVariant(message, variants) {
+  const idx = message.length % variants.length;
+  return variants[idx];
 }
 
-function formatSkills(skills, name) {
-  if (!skills?.length) return `I don't have skills listed for ${name}.`;
-
-  const lines = skills.map((s) => `- **${s.category}:** ${(s.items || []).join(', ')}`);
-  return `${name}'s skills:\n\n${lines.join('\n')}`;
+function formatRoleProse(fact, name, isCurrent = false) {
+  const prefix = isCurrent ? "He's currently at" : 'Before that, he was at';
+  const highlight = fact.highlight ? ` — ${fact.highlight}` : '';
+  return `${prefix} **${fact.company}** as a ${fact.role} (${fact.period})${highlight}`;
 }
 
-function formatCertifications(certifications, name) {
-  if (!certifications?.length) return `I don't have certifications listed for ${name}.`;
-
-  const lines = certifications.map((c) => `- ${c.title}${c.provider ? ` (${c.provider})` : ''}`);
-  return `${name}'s certifications:\n\n${lines.join('\n')}`;
-}
-
-function formatContact(contact, name) {
-  const email = contact?.email;
-  const socials = (contact?.socials || [])
-    .filter((s) => s?.url)
-    .map((s) => `${s.label}: ${s.url}`)
-    .join('\n');
-
-  const parts = [`You can reach ${name} at ${email || 'the contact form on this site'}.`];
-  if (socials) parts.push(socials);
-  return parts.join('\n');
-}
-
-function formatAbout(content) {
+function formatFallback(intent, tier, content, factsBundle, message = '') {
   const name = content.profile?.name || 'Vedic Varma';
-  const roles = (content.profile?.roles || [])
-    .filter((r) => !/^hi$/i.test(r) && !/^i'?m/i.test(r))
-    .join(', ');
-
-  const topJobs = (content.experience || []).slice(0, 3).map((e) => `${e.role} at ${e.company}`).join('; ');
-  const topProjects = (content.projects || []).slice(0, 3).map((p) => p.title).join(', ');
-
-  return `${name} is ${roles || 'a developer'}. Recent roles: ${topJobs || 'not listed'}. Notable projects: ${topProjects || 'not listed'}. Ask about his experience, projects, skills, or certifications for more detail.`;
-}
-
-function formatSingleExperience(entry, name) {
-  const bullet = entry.bullets?.[0] || '';
-  return `At ${entry.company}, ${name} worked as **${entry.role}** (${entry.start}–${entry.end}, ${entry.location || 'remote'}). ${bullet}`;
-}
-
-function tryDirectAnswer(message, content) {
-  const intent = detectIntent(message, content);
-  if (!intent) return null;
-
-  const name = content.profile?.name || 'Vedic Varma';
-  const mentionedCompany = findMentionedCompany(message, content.experience);
-
-  if (mentionedCompany) {
-    return formatSingleExperience(mentionedCompany, name);
-  }
+  const { facts = [], followUpOffer } = factsBundle || {};
 
   switch (intent) {
-    case 'identity':
-      return `I'm the AI assistant for ${name}'s portfolio.`;
-    case 'about':
-      return formatAbout(content);
-    case 'experience':
-      return formatExperience(content.experience, name);
-    case 'projects':
-      return formatProjects(content.projects, name);
-    case 'skills':
-      return formatSkills(content.skills, name);
-    case 'certifications':
-      return formatCertifications(content.certifications, name);
-    case 'contact':
-      return formatContact(content.contact, name);
+    case 'identity': {
+      const openers = [
+        `I'm the AI assistant for ${name}'s portfolio — happy to help you learn about his work.`,
+        `Hi! I know ${name}'s projects, experience, and skills. What would you like to explore?`,
+      ];
+      return introVariant(message, openers);
+    }
+
+    case 'about': {
+      const profile = facts.find((f) => f.type === 'profile');
+      const roles = profile?.roles || 'a developer';
+      const roleFacts = facts.filter((f) => f.type === 'role');
+      const projectFacts = facts.filter((f) => f.type === 'project');
+
+      const roleText = roleFacts.length
+        ? `He's recently worked as ${roleFacts.map((r) => `${r.role} at ${r.company}`).join(' and ')}.`
+        : '';
+      const projectText = projectFacts.length
+        ? `Notable projects include ${projectFacts.map((p) => p.title).join(', ')}.`
+        : '';
+
+      const openers = [
+        `${name} is ${roles}.`,
+        `Here's a quick overview of ${name} — he's ${roles}.`,
+      ];
+      const body = [introVariant(message, openers), roleText, projectText].filter(Boolean).join(' ');
+      const followUp = followUpOffer
+        ? ` Would you like to hear about ${followUpOffer}?`
+        : ' What would you like to dive into?';
+      return body + followUp;
+    }
+
+    case 'experience': {
+      const roles = facts.filter((f) => f.type === 'role');
+
+      if (tier === 'company' && roles.length === 1) {
+        const r = roles[0];
+        const highlight = r.highlight ? ` ${r.highlight}` : '';
+        return `At **${r.company}**, ${name} worked as a ${r.role} (${r.period}, ${r.location}).${highlight} Want to hear about his other roles?`;
+      }
+
+      if (tier === 'recent' && roles.length) {
+        const parts = roles.map((r, i) => formatRoleProse(r, name, i === 0));
+        const followUp = followUpOffer
+          ? ` Want the full timeline, including ${followUpOffer}?`
+          : ' Want the full work history?';
+        return parts.join(' ') + followUp;
+      }
+
+      if (tier === 'all' && roles.length) {
+        const openers = [
+          `Here's ${name}'s full work history:`,
+          `${name} has built experience across several roles:`,
+        ];
+        const prose = roles.map((r) => {
+          const highlight = r.highlight ? ` — ${r.highlight}` : '';
+          return `At **${r.company}** (${r.period}), he was a ${r.role}${highlight}.`;
+        });
+        return `${introVariant(message, openers)} ${prose.join(' ')}`;
+      }
+
+      if (roles.length) {
+        const summary = roles.slice(0, 3).map((r, i) => formatRoleProse(r, name, i === 0)).join(' ');
+        const followUp = followUpOffer
+          ? ` I can also tell you about ${followUpOffer}.`
+          : ' Want more detail on any of these?';
+        return summary + followUp;
+      }
+
+      return `I don't have work experience listed for ${name}.`;
+    }
+
+    case 'projects': {
+      const projects = facts.filter((f) => f.type === 'project');
+      if (!projects.length) return `I don't have projects listed for ${name}.`;
+
+      const openers = [
+        `${name} has worked on some interesting projects:`,
+        `Here are a few highlights from ${name}'s portfolio:`,
+      ];
+      const prose = projects.map((p) => {
+        const stack = p.stack?.length ? ` (${p.stack.join(', ')})` : '';
+        return `**${p.title}** — ${p.description}${stack}`;
+      });
+      return `${introVariant(message, openers)} ${prose.join('. ')}. Want to know about his work experience?`;
+    }
+
+    case 'skills': {
+      const skills = facts.filter((f) => f.type === 'skill');
+      if (!skills.length) return `I don't have skills listed for ${name}.`;
+
+      const grouped = skills.map((s) => `${s.category}: ${(s.items || []).join(', ')}`).join('; ');
+      const openers = [
+        `${name}'s tech stack spans several areas —`,
+        `Here's what ${name} works with:`,
+      ];
+      return `${introVariant(message, openers)} ${grouped}. Curious about specific projects where he used these?`;
+    }
+
+    case 'certifications': {
+      const certs = facts.filter((f) => f.type === 'cert');
+      if (!certs.length) return `I don't have certifications listed for ${name}.`;
+
+      const list = certs.map((c) => (c.provider ? `${c.title} (${c.provider})` : c.title)).join(', ');
+      return `${name} holds certifications including ${list}. Want to know about his skills or projects?`;
+    }
+
+    case 'contact': {
+      const email = facts.find((f) => f.type === 'email')?.value;
+      const socials = facts.filter((f) => f.type === 'social');
+      const emailLine = email
+        ? `You can reach ${name} at **${email}**`
+        : `You can reach ${name} through the contact form on this site`;
+      const socialLine = socials.length
+        ? ` — he's also on ${socials.map((s) => s.label).join(', ')}.`
+        : '.';
+      return `${emailLine}${socialLine} Happy to tell you more about his work if you'd like!`;
+    }
+
     default:
       return null;
   }
 }
 
-module.exports = { detectIntent, tryDirectAnswer };
+module.exports = {
+  findMentionedCompany,
+  detectIntent,
+  detectModifiers,
+  formatFallback,
+};

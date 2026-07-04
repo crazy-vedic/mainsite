@@ -19,13 +19,13 @@ function getLlmConfig() {
   };
 }
 
-function buildRequestBody({ model, messages, stream }) {
+function buildRequestBody({ model, messages, stream, temperature = 0.2, max_tokens = 150 }) {
   return {
     model,
     messages,
     stream,
-    temperature: 0.2,
-    max_tokens: 150,
+    temperature,
+    max_tokens,
     frequency_penalty: 0.5,
     presence_penalty: 0.3,
     stop: ['<|im_end|>', '<|endoftext|>', 'User:', 'Assistant:'],
@@ -109,4 +109,37 @@ async function streamLLM({ systemPrompt, history, message, onDelta, signal }) {
   await parseSseStream(response.body, onDelta, signal);
 }
 
-module.exports = { streamLLM };
+async function streamPolish({ systemPrompt, message, onDelta, signal }) {
+  const { baseUrl, model, apiKey } = getLlmConfig();
+  const messages = [
+    { role: 'system', content: systemPrompt },
+    { role: 'user', content: message },
+  ];
+
+  const headers = { 'Content-Type': 'application/json' };
+  if (apiKey) {
+    headers.Authorization = `Bearer ${apiKey}`;
+  }
+
+  const response = await fetch(`${baseUrl}/v1/chat/completions`, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify(
+      buildRequestBody({ model, messages, stream: true, temperature: 0.4, max_tokens: 180 }),
+    ),
+    signal,
+  });
+
+  if (!response.ok) {
+    const detail = await response.text().catch(() => '');
+    throw new Error(`LLM polish failed (${response.status}): ${detail}`);
+  }
+
+  if (!response.body) {
+    throw new Error('LLM returned an empty polish stream');
+  }
+
+  await parseSseStream(response.body, onDelta, signal);
+}
+
+module.exports = { streamLLM, streamPolish };

@@ -1,8 +1,6 @@
 const express = require('express');
 const { loadContent } = require('../lib/contentStore');
-const { buildSystemPrompt } = require('../lib/buildSystemPrompt');
-const { detectIntent, tryDirectAnswer } = require('../lib/directAnswer');
-const { streamLLM } = require('../lib/llmClient');
+const { resolveChatResponse } = require('../lib/resolveChatResponse');
 const { chatLimiter } = require('../lib/chatRateLimit');
 
 const router = express.Router();
@@ -66,44 +64,34 @@ router.post('/', chatLimiter, async (req, res) => {
     res.setHeader('X-Accel-Buffering', 'no');
     res.flushHeaders?.();
 
-    let reply = '';
+    const onDelta = (delta) => {
+      if (abortController.signal.aborted || res.writableEnded) return;
 
-    const directReply = tryDirectAnswer(trimmedMessage, content);
-    if (directReply) {
-      reply = directReply;
-      writeSse(res, { delta: directReply });
-    } else {
-      const intent = detectIntent(trimmedMessage, content);
-      const systemPrompt = buildSystemPrompt(content, intent);
+      try {
+        writeSse(res, { delta });
+      } catch {
+        abortController.abort();
+      }
+    };
 
-      await streamLLM({
-        systemPrompt,
-        history: trimmedHistory.slice(-2),
-        message: trimmedMessage,
-        signal: abortController.signal,
-        onDelta: (delta) => {
-          if (abortController.signal.aborted || res.writableEnded) return;
-
-          reply += delta;
-          try {
-            writeSse(res, { delta });
-          } catch {
-            abortController.abort();
-          }
-        },
-      });
-    }
+    const result = await resolveChatResponse({
+      message: trimmedMessage,
+      content,
+      history: trimmedHistory,
+      signal: abortController.signal,
+      onDelta,
+    });
 
     if (abortController.signal.aborted) {
       return;
     }
 
-    if (!reply.trim()) {
+    if (!result.reply.trim()) {
       writeSse(res, { error: 'LLM returned an empty response' });
       return res.end();
     }
 
-    writeSse(res, { done: true, reply: reply.trim() });
+    writeSse(res, { done: true, reply: result.reply, suggestions: result.suggestions || [] });
     res.end();
   } catch (err) {
     if (isAbortError(err) || abortController.signal.aborted) {
