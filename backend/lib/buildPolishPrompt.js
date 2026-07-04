@@ -24,13 +24,15 @@ function buildPolishPrompt(factsBundle, userQuestion, history = []) {
 Topic: ${intent} — ${focus}
 
 Rules:
-- Answer the user's question directly using ONLY the provided facts.
+- Write 2–4 sentences total, then stop. Be concise.
+- Answer the question directly using ONLY the provided facts.
+- NEVER greet the user (no "Hi", "Hello", "Hi there").
+- Do NOT narrate ("Let's dive in", "First up", "Next", "Today I'm going to").
+- Do NOT speak as ${name} — never say "I'm ${name}". Describe him in third person ("he", "${name}").
 - Do NOT repeat the portfolio greeting ("I'm an AI assistant...").
-- Refer to ${name} in third person ("he", "${name}").
 - Do not use bullet lists or markdown headers — write flowing prose.
 - You may use **bold** for company names or project titles.
-- End with a brief follow-up question when followUpOffer is present.
-- Keep the reply concise.${antiRepeat ? `\n${antiRepeat}` : ''}`;
+- End with a brief follow-up question when followUpOffer is present.${antiRepeat ? `\n${antiRepeat}` : ''}`;
 
   const userMessage = `FACTS:
 ${factsJson}

@@ -122,7 +122,7 @@ async function streamLLM({ systemPrompt, history, message, onDelta, signal }) {
   await parseSseStream(response.body, onDelta, signal);
 }
 
-async function streamPolish({ systemPrompt, userMessage, onDelta, signal }) {
+async function streamPolish({ systemPrompt, userMessage, onDelta, signal, maxTokens = 280 }) {
   const { baseUrl, model, apiKey } = getLlmConfig();
   const messages = [
     { role: 'system', content: systemPrompt },
@@ -143,7 +143,7 @@ async function streamPolish({ systemPrompt, userMessage, onDelta, signal }) {
         messages,
         stream: true,
         temperature: 0.2,
-        max_tokens: 180,
+        max_tokens: maxTokens,
         cache_prompt: false,
       }),
     ),

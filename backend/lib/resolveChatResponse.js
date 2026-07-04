@@ -196,12 +196,21 @@ function replyReferencesFacts(reply, facts) {
   );
 }
 
+function looksTruncated(reply) {
+  const trimmed = (reply || '').trim();
+  if (!trimmed) return true;
+  if (trimmed.length < 40) return false;
+  return !/[.!?…"')\]]$/.test(trimmed);
+}
+
 function isWeakPolishReply(reply, factsBundle) {
   const trimmed = (reply || '').trim();
   if (!trimmed) return true;
   if (GENERIC_REPLY_RE.test(trimmed)) return true;
   if (GREETING_ECHO_RE.test(trimmed)) return true;
   if (/how can i (assist|help) you today/i.test(trimmed)) return true;
+  if (/\bi'?m vedic\b/i.test(trimmed)) return true;
+  if (looksTruncated(trimmed)) return true;
 
   const facts = factsBundle?.facts || [];
   if (!facts.length) return false;
@@ -215,11 +224,14 @@ function streamText(text, onDelta) {
 
 async function tryPolish(factsBundle, message, history, content, onDelta, signal) {
   const { systemPrompt, userMessage } = buildPolishPrompt(factsBundle, message, history);
+  const factCount = factsBundle?.facts?.length || 0;
+  const maxTokens = Math.min(350, 120 + factCount * 45);
   let buffered = '';
 
   const polishPromise = streamPolish({
     systemPrompt,
     userMessage,
+    maxTokens,
     signal,
     onDelta: (delta) => {
       buffered += delta;
@@ -242,7 +254,8 @@ async function tryPolish(factsBundle, message, history, content, onDelta, signal
     }
 
     if (isWeakPolishReply(trimmed, factsBundle)) {
-      console.log('[polish] rejected: generic or missing facts', { reply: trimmed.slice(0, 120) });
+      const reason = looksTruncated(trimmed) ? 'truncated (hit token limit)' : 'generic or missing facts';
+      console.log(`[polish] rejected: ${reason}`, { reply: trimmed.slice(0, 120), maxTokens });
       return null;
     }
 
