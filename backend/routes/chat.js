@@ -1,6 +1,7 @@
 const express = require('express');
 const { loadContent } = require('../lib/contentStore');
 const { buildSystemPrompt } = require('../lib/buildSystemPrompt');
+const { detectIntent, tryDirectAnswer } = require('../lib/directAnswer');
 const { streamLLM } = require('../lib/llmClient');
 const { chatLimiter } = require('../lib/chatRateLimit');
 
@@ -57,7 +58,7 @@ router.post('/', chatLimiter, async (req, res) => {
     );
 
     const content = await loadContent();
-    const systemPrompt = buildSystemPrompt(content);
+    const trimmedMessage = message.trim();
 
     res.setHeader('Content-Type', 'text/event-stream; charset=utf-8');
     res.setHeader('Cache-Control', 'no-cache, no-transform');
@@ -67,22 +68,31 @@ router.post('/', chatLimiter, async (req, res) => {
 
     let reply = '';
 
-    await streamLLM({
-      systemPrompt,
-      history: trimmedHistory,
-      message: message.trim(),
-      signal: abortController.signal,
-      onDelta: (delta) => {
-        if (abortController.signal.aborted || res.writableEnded) return;
+    const directReply = tryDirectAnswer(trimmedMessage, content);
+    if (directReply) {
+      reply = directReply;
+      writeSse(res, { delta: directReply });
+    } else {
+      const intent = detectIntent(trimmedMessage, content);
+      const systemPrompt = buildSystemPrompt(content, intent);
 
-        reply += delta;
-        try {
-          writeSse(res, { delta });
-        } catch {
-          abortController.abort();
-        }
-      },
-    });
+      await streamLLM({
+        systemPrompt,
+        history: trimmedHistory.slice(-2),
+        message: trimmedMessage,
+        signal: abortController.signal,
+        onDelta: (delta) => {
+          if (abortController.signal.aborted || res.writableEnded) return;
+
+          reply += delta;
+          try {
+            writeSse(res, { delta });
+          } catch {
+            abortController.abort();
+          }
+        },
+      });
+    }
 
     if (abortController.signal.aborted) {
       return;
