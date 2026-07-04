@@ -7,7 +7,7 @@ async function askLLM({ systemPrompt, history, message }) {
   const baseUrl = (process.env.LLM_API_URL || 'http://localhost:11434').replace(/\/$/, '');
   const model = process.env.LLM_MODEL || 'llama3.1';
   const apiKey = process.env.LLM_API_KEY;
-
+  console.log(baseUrl, model, apiKey);
   const messages = [
     { role: 'system', content: systemPrompt },
     ...(history || []).filter((m) => m.role === 'user' || m.role === 'assistant'),
