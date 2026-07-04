@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
+import ReactMarkdown from 'react-markdown';
 import { getClientId } from '../../lib/clientId';
 import './Home.css';
 
@@ -572,6 +573,28 @@ function rollbackFailedSend(setMessages, sentText) {
   });
 }
 
+function ChatMessageContent({ role, content }) {
+  if (role === 'user') {
+    return content;
+  }
+
+  return (
+    <div className="chat-markdown">
+      <ReactMarkdown
+        components={{
+          a: ({ href, children }) => (
+            <a href={href} target="_blank" rel="noreferrer">
+              {children}
+            </a>
+          ),
+        }}
+      >
+        {content}
+      </ReactMarkdown>
+    </div>
+  );
+}
+
 async function readChatStream(response, onDelta, signal) {
   const reader = response.body.getReader();
   const decoder = new TextDecoder();
@@ -760,7 +783,7 @@ function ChatWidget({ config, name, variant = 'floating' }) {
           }
           return (
             <div key={i} className={`chat-bubble chat-bubble--${m.role}`}>
-              {m.content}
+              <ChatMessageContent role={m.role} content={m.content} />
             </div>
           );
         })}
