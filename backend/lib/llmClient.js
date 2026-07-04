@@ -19,7 +19,7 @@ async function askLLM({ systemPrompt, history, message }) {
     headers.Authorization = `Bearer ${apiKey}`;
   }
 
-  const response = await fetch(`${baseUrl}/api/chat`, {
+  const response = await fetch(`${baseUrl}/v1/chat/completions`, {
     method: 'POST',
     headers,
     body: JSON.stringify({
