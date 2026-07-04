@@ -6,8 +6,24 @@ const { chatLimiter } = require('../lib/chatRateLimit');
 const router = express.Router();
 const MAX_HISTORY_TURNS = 5;
 
+function flushSse(res) {
+  if (typeof res.flush === 'function') {
+    res.flush();
+    return;
+  }
+
+  const { socket } = res;
+  if (socket && !socket.destroyed) {
+    socket.setNoDelay(true);
+    if (typeof socket.uncork === 'function') {
+      socket.uncork();
+    }
+  }
+}
+
 function writeSse(res, payload) {
   res.write(`data: ${JSON.stringify(payload)}\n\n`);
+  flushSse(res);
 }
 
 function isAbortError(err) {

@@ -31,15 +31,8 @@ function isDuplicateOfPrevious(reply, history) {
   return probe.length >= 40 && longer.includes(probe);
 }
 
-const UNIT_SPLIT = /(\s+|[^\s]+)/g;
-
 function streamText(text, onDelta) {
-  if (!text || !onDelta) return;
-
-  const units = text.match(UNIT_SPLIT) || [];
-  for (const unit of units) {
-    onDelta(unit);
-  }
+  if (text && onDelta) onDelta(text);
 }
 
 async function tryPolish(factsBundle, message, history, onDelta, signal) {
