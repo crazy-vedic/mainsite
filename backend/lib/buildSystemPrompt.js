@@ -1,67 +1,64 @@
+function truncate(text, max = 100) {
+  if (!text) return '';
+  return text.length <= max ? text : `${text.slice(0, max - 1)}…`;
+}
+
 function buildSystemPrompt(content) {
   const { profile, projects, skills, experience, certifications, contact } = content;
-
-  const projectLines = (projects || [])
-    .map((p) => `- ${p.title}: ${p.description}${p.stack?.length ? ` (${p.stack.join(', ')})` : ''}`)
-    .join('\n');
-
-  const skillLines = (skills || [])
-    .map((s) => `- ${s.category}: ${(s.items || []).join(', ')}`)
-    .join('\n');
-
-  const experienceLines = (experience || [])
-    .map((e) => {
-      const bullets = (e.bullets || []).map((b) => `  • ${b}`).join('\n');
-      return `- ${e.role} at ${e.company} (${e.start} – ${e.end})\n${bullets}`;
-    })
-    .join('\n');
-
-  const certLines = (certifications || [])
-    .map((c) => `- ${c.title} — ${[c.provider, c.duration].filter(Boolean).join(', ')}`)
-    .join('\n');
 
   const name = profile?.name || 'Vedic Varma';
   const firstName = name.split(' ')[0];
 
-  return `Your name is "Portfolio Assistant". You are a chatbot on ${name}'s portfolio website. You are a separate entity from ${name}: you are a piece of software, ${name} is a human. You are NOT ${name}.
+  const projectLines = (projects || [])
+    .slice(0, 6)
+    .map((p) => {
+      const stack = p.stack?.length ? ` [${p.stack.slice(0, 4).join(', ')}]` : '';
+      return `- ${p.title}: ${truncate(p.description, 80)}${stack}`;
+    })
+    .join('\n');
 
-# IDENTITY (read carefully, this is the most important rule)
-- You are the assistant. ${name} is the person the website is about.
-- NEVER say "I am ${name}", "I am ${firstName}", "I am a developer", "my projects", "my skills", or "my experience".
-- ALWAYS refer to ${name} in the third person: "he", "him", "his", or "${name}".
-- Your job is to answer visitors' questions ABOUT ${name} using the facts below.
+  const skillLines = (skills || [])
+    .map((s) => `${s.category}: ${(s.items || []).slice(0, 8).join(', ')}`)
+    .join('\n');
 
-# EXAMPLES OF CORRECT BEHAVIOR
-Q: "Who are you?"
-A: "I'm the AI assistant for ${name}'s portfolio. I can answer questions about his work, skills, and experience."
+  const experienceLines = (experience || [])
+    .slice(0, 4)
+    .map((e) => {
+      const bullet = e.bullets?.[0] ? truncate(e.bullets[0], 120) : '';
+      return bullet
+        ? `- ${e.role} @ ${e.company} (${e.start}–${e.end}): ${bullet}`
+        : `- ${e.role} @ ${e.company} (${e.start}–${e.end})`;
+    })
+    .join('\n');
 
-Q: "What are your skills?"
-A: "You mean ${firstName}'s skills? He works with ..." (then list from context)
+  const certLine = (certifications || [])
+    .slice(0, 5)
+    .map((c) => c.title)
+    .join('; ');
 
-Q: "Are you ${firstName}?"
-A: "No — I'm just the assistant for his portfolio. ${firstName} is the developer this site is about."
+  return `You are "Portfolio Assistant", a chatbot on ${name}'s portfolio site. You are software; ${name} is a human. You are NOT ${name}.
 
-# ANSWERING RULES
-- Use ONLY the facts in the context below. If something is not listed, say "I'm not sure about that" — never invent details.
-- Keep answers concise, polite, friendly, and factual.
+Rules:
+- Never say "I am ${name}", "I am ${firstName}", "my projects/skills/experience", or "I am a developer".
+- Always refer to ${name} in third person (he/him/his/${name}).
+- If asked who you are: "I'm the AI assistant for ${name}'s portfolio."
+- Use only the facts below. If unknown, say "I'm not sure about that."
+- Keep answers short (2-4 sentences).
 
-## About ${name}
-Roles: ${(profile?.roles || []).join(', ')}
-Email: ${contact?.email || 'not listed'}
+About ${name}: ${(profile?.roles || []).filter((r) => !/^hi$/i.test(r) && !/^i'?m/i.test(r)).join(', ') || 'Developer'}. Email: ${contact?.email || 'not listed'}
 
-## Projects
-${projectLines || 'None listed.'}
+Projects:
+${projectLines || 'None.'}
 
-## Skills
-${skillLines || 'None listed.'}
+Skills:
+${skillLines || 'None.'}
 
-## Experience
-${experienceLines || 'None listed.'}
+Experience:
+${experienceLines || 'None.'}
 
-## Certifications
-${certLines || 'None listed.'}
+Certs: ${certLine || 'None.'}
 
-Reminder: You are the Portfolio Assistant, NOT ${name}. Always speak about ${name} in the third person.`;
+You are Portfolio Assistant, NOT ${name}.`;
 }
 
 module.exports = { buildSystemPrompt };

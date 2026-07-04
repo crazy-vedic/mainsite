@@ -519,7 +519,7 @@ function ContactSection({ contact }) {
 /* ============================================================
    Chat widget — talks to a self-hosted LLM through /api/chat.
    The backend owns the system prompt / model choice; this
-   component only knows about { message, history } -> { reply }.
+   component sends { message, history } and reads SSE deltas.
 
    variant="inline"   — embedded in the hero, always open, no
                          toggle button, fills its container.
@@ -527,6 +527,46 @@ function ContactSection({ contact }) {
                          rendered once outside the hero so people
                          can keep chatting after they scroll away.
    ============================================================ */
+
+const CHAT_HISTORY_LIMIT = 5;
+
+async function readChatStream(response, onDelta) {
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = '';
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+
+    buffer += decoder.decode(value, { stream: true });
+    const events = buffer.split('\n\n');
+    buffer = events.pop() || '';
+
+    for (const event of events) {
+      const line = event.split('\n').find((entry) => entry.startsWith('data: '));
+      if (!line) continue;
+
+      const payload = line.slice(6).trim();
+      if (!payload) continue;
+
+      let data;
+      try {
+        data = JSON.parse(payload);
+      } catch {
+        continue;
+      }
+
+      if (data.error) {
+        throw new Error(data.error);
+      }
+
+      if (data.delta) {
+        onDelta(data.delta);
+      }
+    }
+  }
+}
 
 function ChatWidget({ config, name, variant = 'floating' }) {
   const enabled = config?.enabled !== false;
@@ -554,8 +594,11 @@ function ChatWidget({ config, name, variant = 'floating' }) {
     const text = input.trim();
     if (!text || sending) return;
 
-    const history = messages.map(({ role, content }) => ({ role, content }));
-    setMessages((m) => [...m, { role: 'user', content: text }]);
+    const history = messages
+      .map(({ role, content }) => ({ role, content }))
+      .slice(-CHAT_HISTORY_LIMIT);
+
+    setMessages((m) => [...m, { role: 'user', content: text }, { role: 'assistant', content: '' }]);
     setInput('');
     setSending(true);
 
@@ -566,13 +609,40 @@ function ChatWidget({ config, name, variant = 'floating' }) {
         body: JSON.stringify({ message: text, history }),
       });
       if (!res.ok) throw new Error('bad response');
-      const data = await res.json();
-      setMessages((m) => [...m, { role: 'assistant', content: data.reply || "I couldn't find an answer to that." }]);
+
+      let reply = '';
+      await readChatStream(res, (delta) => {
+        reply += delta;
+        setMessages((m) => {
+          const next = [...m];
+          next[next.length - 1] = { role: 'assistant', content: reply };
+          return next;
+        });
+      });
+
+      if (!reply.trim()) {
+        setMessages((m) => {
+          const next = [...m];
+          next[next.length - 1] = { role: 'assistant', content: "I couldn't find an answer to that." };
+          return next;
+        });
+      }
     } catch {
-      setMessages((m) => [
-        ...m,
-        { role: 'assistant', content: "I'm having trouble connecting right now — try again in a moment." },
-      ]);
+      setMessages((m) => {
+        const next = [...m];
+        const last = next[next.length - 1];
+        if (last?.role === 'assistant' && !last.content) {
+          next[next.length - 1] = {
+            role: 'assistant',
+            content: "I'm having trouble connecting right now — try again in a moment.",
+          };
+          return next;
+        }
+        return [
+          ...m,
+          { role: 'assistant', content: "I'm having trouble connecting right now — try again in a moment." },
+        ];
+      });
     } finally {
       setSending(false);
     }
@@ -600,12 +670,17 @@ function ChatWidget({ config, name, variant = 'floating' }) {
       </div>
 
       <div className="chat-panel__messages" ref={listRef}>
-        {messages.map((m, i) => (
-          <div key={i} className={`chat-bubble chat-bubble--${m.role}`}>
-            {m.content}
-          </div>
-        ))}
-        {sending && (
+        {messages.map((m, i) => {
+          if (sending && i === messages.length - 1 && m.role === 'assistant' && !m.content) {
+            return null;
+          }
+          return (
+            <div key={i} className={`chat-bubble chat-bubble--${m.role}`}>
+              {m.content}
+            </div>
+          );
+        })}
+        {sending && messages[messages.length - 1]?.content === '' && (
           <div className="chat-bubble chat-bubble--assistant chat-bubble--typing" aria-live="polite">
             <span />
             <span />

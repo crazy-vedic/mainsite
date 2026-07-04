@@ -2,9 +2,10 @@ const express = require('express');
 const rateLimit = require('express-rate-limit');
 const { loadContent } = require('../lib/contentStore');
 const { buildSystemPrompt } = require('../lib/buildSystemPrompt');
-const { askLLM } = require('../lib/llmClient');
+const { streamLLM } = require('../lib/llmClient');
 
 const router = express.Router();
+const MAX_HISTORY_TURNS = 5;
 
 const chatLimiter = rateLimit({
   windowMs: 60 * 1000,
@@ -14,6 +15,10 @@ const chatLimiter = rateLimit({
   skipFailedRequests: true,
   message: { error: 'Rate limit exceeded. Please wait a minute before sending another message.' },
 });
+
+function writeSse(res, payload) {
+  res.write(`data: ${JSON.stringify(payload)}\n\n`);
+}
 
 router.post('/', chatLimiter, async (req, res) => {
   try {
@@ -31,21 +36,46 @@ router.post('/', chatLimiter, async (req, res) => {
       return res.status(400).json({ error: 'history must be an array' });
     }
 
-    const trimmedHistory = (history || []).slice(-20).filter(
+    const trimmedHistory = (history || []).slice(-MAX_HISTORY_TURNS).filter(
       (turn) => turn && (turn.role === 'user' || turn.role === 'assistant') && typeof turn.content === 'string',
     );
 
     const content = await loadContent();
     const systemPrompt = buildSystemPrompt(content);
-    const { reply } = await askLLM({
+
+    res.setHeader('Content-Type', 'text/event-stream; charset=utf-8');
+    res.setHeader('Cache-Control', 'no-cache, no-transform');
+    res.setHeader('Connection', 'keep-alive');
+    res.setHeader('X-Accel-Buffering', 'no');
+    res.flushHeaders?.();
+
+    let reply = '';
+
+    await streamLLM({
       systemPrompt,
       history: trimmedHistory,
       message: message.trim(),
+      onDelta: (delta) => {
+        reply += delta;
+        writeSse(res, { delta });
+      },
     });
 
-    res.json({ reply });
+    if (!reply.trim()) {
+      writeSse(res, { error: 'LLM returned an empty response' });
+      return res.end();
+    }
+
+    writeSse(res, { done: true, reply: reply.trim() });
+    res.end();
   } catch (err) {
     console.error('POST /api/chat error:', err.message);
+
+    if (res.headersSent) {
+      writeSse(res, { error: 'Failed to get a response from the assistant.' });
+      return res.end();
+    }
+
     res.status(502).json({ error: 'Failed to get a response from the assistant.' });
   }
 });
