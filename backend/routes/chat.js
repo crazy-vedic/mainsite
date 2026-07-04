@@ -11,6 +11,7 @@ const chatLimiter = rateLimit({
   max: 1,
   standardHeaders: true,
   legacyHeaders: false,
+  skipFailedRequests: true,
   message: { error: 'Rate limit exceeded. Please wait a minute before sending another message.' },
 });
 

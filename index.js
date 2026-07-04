@@ -11,6 +11,7 @@ const port = parseInt(process.env.PORT, 10) || 3000;
 app.use(cors());
 app.use(express.json());
 
+app.set('trust proxy', 1);
 app.use('/api/content', require('./backend/routes/content'));
 app.use('/api/chat', require('./backend/routes/chat'));
 
