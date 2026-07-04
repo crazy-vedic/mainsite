@@ -1,20 +1,11 @@
 const express = require('express');
-const rateLimit = require('express-rate-limit');
 const { loadContent } = require('../lib/contentStore');
 const { buildSystemPrompt } = require('../lib/buildSystemPrompt');
 const { streamLLM } = require('../lib/llmClient');
+const { chatLimiter } = require('../lib/chatRateLimit');
 
 const router = express.Router();
 const MAX_HISTORY_TURNS = 5;
-
-const chatLimiter = rateLimit({
-  windowMs: 60 * 1000,
-  max: 1,
-  standardHeaders: true,
-  legacyHeaders: false,
-  skipFailedRequests: true,
-  message: { error: 'Rate limit exceeded. Please wait a minute before sending another message.' },
-});
 
 function writeSse(res, payload) {
   res.write(`data: ${JSON.stringify(payload)}\n\n`);

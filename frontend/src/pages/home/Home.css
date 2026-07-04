@@ -659,6 +659,14 @@
   30% { transform: translateY(-4px); opacity: 1; }
 }
 
+.chat-panel__error {
+  margin: 0;
+  padding: 0 var(--space-2) var(--space-1);
+  font-size: 0.82rem;
+  line-height: 1.4;
+  color: #e77;
+}
+
 .chat-panel__input {
   display: flex;
   gap: var(--space-1);

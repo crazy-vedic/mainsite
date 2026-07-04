@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { getClientId } from '../../lib/clientId';
 import './Home.css';
 
 /* ============================================================
@@ -530,6 +531,47 @@ function ContactSection({ contact }) {
 
 const CHAT_HISTORY_LIMIT = 5;
 
+async function parseRateLimitResponse(response) {
+  let bodyError = null;
+
+  try {
+    const data = await response.json();
+    if (data?.error) bodyError = data.error;
+  } catch {
+    // ignore malformed rate-limit body
+  }
+
+  const retryAfter = response.headers.get('Retry-After');
+  if (retryAfter) {
+    const seconds = parseInt(retryAfter, 10);
+    if (!Number.isNaN(seconds) && seconds > 0) {
+      return seconds >= 60
+        ? `Please wait about ${Math.ceil(seconds / 60)} minute before sending another message.`
+        : `Please wait ${seconds} seconds before sending another message.`;
+    }
+  }
+
+  return bodyError || 'Please wait a minute before sending another message.';
+}
+
+function rollbackFailedSend(setMessages, sentText) {
+  setMessages((m) => {
+    const next = [...m];
+    const last = next[next.length - 1];
+
+    if (last?.role === 'assistant' && !last.content) {
+      next.pop();
+    }
+
+    const trailing = next[next.length - 1];
+    if (trailing?.role === 'user' && trailing.content === sentText) {
+      next.pop();
+    }
+
+    return next;
+  });
+}
+
 async function readChatStream(response, onDelta, signal) {
   const reader = response.body.getReader();
   const decoder = new TextDecoder();
@@ -587,6 +629,7 @@ function ChatWidget({ config, name, variant = 'floating' }) {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const [sending, setSending] = useState(false);
+  const [sendError, setSendError] = useState(null);
   const listRef = useRef(null);
   const abortRef = useRef(null);
 
@@ -609,6 +652,8 @@ function ChatWidget({ config, name, variant = 'floating' }) {
     const text = input.trim();
     if (!text || sending) return;
 
+    setSendError(null);
+
     const history = messages
       .map(({ role, content }) => ({ role, content }))
       .slice(-CHAT_HISTORY_LIMIT);
@@ -622,12 +667,23 @@ function ChatWidget({ config, name, variant = 'floating' }) {
     setSending(true);
 
     try {
+      const headers = { 'Content-Type': 'application/json' };
+      const clientId = getClientId();
+      if (clientId) {
+        headers['X-Client-Id'] = clientId;
+      }
+
       const res = await fetch('/api/chat', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify({ message: text, history }),
         signal: controller.signal,
       });
+
+      if (res.status === 429) {
+        throw new Error(await parseRateLimitResponse(res));
+      }
+
       if (!res.ok) throw new Error('bad response');
 
       let reply = '';
@@ -664,21 +720,13 @@ function ChatWidget({ config, name, variant = 'floating' }) {
         return;
       }
 
-      setMessages((m) => {
-        const next = [...m];
-        const last = next[next.length - 1];
-        if (last?.role === 'assistant' && !last.content) {
-          next[next.length - 1] = {
-            role: 'assistant',
-            content: "I'm having trouble connecting right now — try again in a moment.",
-          };
-          return next;
-        }
-        return [
-          ...m,
-          { role: 'assistant', content: "I'm having trouble connecting right now — try again in a moment." },
-        ];
-      });
+      rollbackFailedSend(setMessages, text);
+      setInput(text);
+      setSendError(
+        err.message && err.message !== 'bad response'
+          ? err.message
+          : "I'm having trouble connecting right now — try again in a moment.",
+      );
     } finally {
       setSending(false);
     }
@@ -724,6 +772,12 @@ function ChatWidget({ config, name, variant = 'floating' }) {
           </div>
         )}
       </div>
+
+      {sendError && (
+        <p className="chat-panel__error" role="alert">
+          {sendError}
+        </p>
+      )}
 
       <div className="chat-panel__input">
         <textarea

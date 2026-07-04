@@ -24,8 +24,10 @@ function buildRequestBody({ model, messages, stream }) {
     model,
     messages,
     stream,
-    temperature: 0.3,
+    temperature: 0.5,
     max_tokens: 200,
+    frequency_penalty: 1.2,
+    presence_penalty: 1.1,
     stop: ['<|im_end|>', '<|endoftext|>', 'User:', 'Assistant:'],
   };
 }
