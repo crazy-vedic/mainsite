@@ -6,22 +6,42 @@ function findMentionedCompany(message, experience) {
   });
 }
 
+const INTENT_PATTERNS = [
+  { intent: 'identity', re: /\b(who are you|what are you)\b/i },
+  {
+    intent: 'experience',
+    re: /\b((work|job|career|professional)[\s-]*(experien[a-z]*|expiri[a-z]*|history|background)|experien[a-z]*|expiri[a-z]*|works?\b|work\s+history|internships?|employ(?:ment|ed)?|where\s+(?:has|did)\s+he\s+work|roles?\s+at)\b/i,
+  },
+  { intent: 'certifications', re: /\b(certif|gate\s+qualified|ibm\s+data|google\s+cloud)\b/i },
+  {
+    intent: 'skills',
+    re: /\b(skills?|tech\s+stack|technologies|languages|frameworks|what\s+(?:can|does)\s+he\s+know)\b/i,
+  },
+  { intent: 'contact', re: /\b(contact|email|reach|hire|linkedin|github|whatsapp)\b/i },
+  {
+    intent: 'projects',
+    re: /\b(projects?|built|portfolio|hackathon|what\s+did\s+he\s+(?:build|make|create))\b/i,
+  },
+  {
+    intent: 'about',
+    re: /\b(everything|who\s+is\s+vedic|introduce(?:\s+vedic|\s+him)?|about\s+vedic|about\s+him\b|tell\s+me\s+about\s+(?:vedic|him|himself|you)\b)\b/i,
+  },
+  {
+    intent: 'about',
+    re: /\btell\s+me\s+about\b/i,
+    unless: /\b(work|exper|expiri|job|career|project|skill|certif|contact|role|intern|employ)\b/i,
+  },
+];
+
 function detectIntent(message, content = {}) {
   const q = message.toLowerCase();
 
   if (findMentionedCompany(message, content.experience)) return 'experience';
 
-  if (/\b(who are you|what are you)\b/.test(q)) return 'identity';
-  if (/\b(everything|tell me about|who is vedic|introduce|about vedic)\b/.test(q)) return 'about';
-  if (/\b(exper|works?|work history|work exp|jobs?|internships?|career|employ|where (has|did) he work)\b/.test(q)) {
-    return 'experience';
+  for (const { intent, re, unless } of INTENT_PATTERNS) {
+    if (unless && unless.test(q)) continue;
+    if (re.test(q)) return intent;
   }
-  if (/\b(certif|gate qualified|ibm data|google cloud)\b/.test(q)) return 'certifications';
-  if (/\b(skills?|tech stack|technologies|languages|frameworks|what (can|does) he know)\b/.test(q)) {
-    return 'skills';
-  }
-  if (/\b(contact|email|reach|hire|linkedin|github|whatsapp)\b/.test(q)) return 'contact';
-  if (/\b(project|built|portfolio|hackathon|what did he (build|make|create))\b/.test(q)) return 'projects';
 
   return null;
 }

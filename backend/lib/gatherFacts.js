@@ -165,37 +165,39 @@ function gatherFacts(message, content, history, intent, modifiers = {}) {
   return { intent, tier, facts, followUpOffer, name };
 }
 
-function suggestChips(intent, tier, content, factsBundle = {}) {
-  if (!intent) {
-    return ['Projects', 'Work experience', 'Skills'];
-  }
-
-  const experience = content.experience || [];
-  const topCompany = experience[0]?.company;
-
-  const chipSets = {
-    about: ['Recent work', 'Projects', 'Skills'],
-    experience: {
-      recent: ['Full work history', topCompany ? `${topCompany} details` : 'Latest role', 'Projects'],
-      company: ['Other roles', 'Projects', 'Skills'],
-      all: ['Recent work', 'Projects', 'Contact'],
-      default: ['Recent work', 'Full work history', 'Projects'],
-    },
-    projects: ['Work experience', 'Tech stack', 'Recent work'],
-    skills: ['Projects', 'Work experience', 'Certifications'],
-    certifications: ['Skills', 'Projects', 'Work experience'],
-    contact: ['Projects', 'Work experience', 'Skills'],
-    identity: ['About Vedic', 'Projects', 'Work experience'],
+function suggestSectionLinks(intent, content) {
+  const SECTIONS = {
+    experience: { label: 'Experience', href: '#experience' },
+    projects: { label: 'Projects', href: '#projects' },
+    skills: { label: 'Skills', href: '#skills' },
+    certifications: { label: 'Certifications', href: '#certifications' },
+    contact: { label: 'Contact', href: '#contact' },
   };
 
-  if (intent === 'experience') {
-    const set = chipSets.experience[tier] || chipSets.experience.default;
-    return set.slice(0, 3);
-  }
+  const available = [];
+  if (content.experience?.length) available.push('experience');
+  if (content.projects?.length) available.push('projects');
+  if (content.skills?.length) available.push('skills');
+  if (content.certifications?.length) available.push('certifications');
+  if (content.contact) available.push('contact');
 
-  const set = chipSets[intent];
-  if (Array.isArray(set)) return set.slice(0, 3);
-  return ['Projects', 'Work experience', 'Skills'];
+  const relatedByIntent = {
+    about: ['experience', 'projects', 'skills'],
+    experience: ['experience', 'projects', 'skills'],
+    projects: ['projects', 'experience', 'skills'],
+    skills: ['skills', 'projects', 'experience'],
+    certifications: ['certifications', 'skills', 'experience'],
+    contact: ['contact', 'projects', 'experience'],
+    identity: ['experience', 'projects', 'skills'],
+  };
+
+  const preferred = relatedByIntent[intent] || ['projects', 'experience', 'skills'];
+
+  const seen = new Set();
+  return preferred
+    .filter((key) => available.includes(key) && !seen.has(key) && seen.add(key))
+    .slice(0, 4)
+    .map((key) => ({ intent: key, ...SECTIONS[key] }));
 }
 
 module.exports = {
@@ -203,5 +205,5 @@ module.exports = {
   pickExperienceSlice,
   pickProjectsSlice,
   gatherFacts,
-  suggestChips,
+  suggestSectionLinks,
 };

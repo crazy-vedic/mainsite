@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback, useMemo, useLayoutEffect } from 'react';
+import { useState, useEffect, useRef, useCallback, useLayoutEffect } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { getClientId } from '../../lib/clientId';
 import { useAdaptiveStream } from '../../lib/streamConsumer';
@@ -277,9 +277,9 @@ function ProjectCard({ project }) {
 function ProjectsSection({ projects }) {
   if (!projects || projects.length === 0) return null;
   return (
-    <section id="projects" className="section">
+    <section className="section">
       <p className="eyebrow">{'// projects'}</p>
-      <h2 className="section__title">Projects</h2>
+      <h2 id="projects" className="section__title">Projects</h2>
       <div className="project-grid">
         {projects.map((p) => (
           <ProjectCard key={p.id || p.title} project={p} />
@@ -308,9 +308,9 @@ function SkillCard({ skill }) {
 function SkillsSection({ skills }) {
   if (!skills || skills.length === 0) return null;
   return (
-    <section id="skills" className="section">
+    <section className="section">
       <p className="eyebrow">{'// skills'}</p>
-      <h2 className="section__title">Skills</h2>
+      <h2 id="skills" className="section__title">Skills</h2>
       <div className="skill-grid">
         {skills.map((s) => (
           <SkillCard key={s.category} skill={s} />
@@ -354,9 +354,9 @@ function ExperienceItem({ item }) {
 function ExperienceSection({ experience }) {
   if (!experience || experience.length === 0) return null;
   return (
-    <section id="experience" className="section">
+    <section className="section">
       <p className="eyebrow">{'// experience'}</p>
-      <h2 className="section__title">Experience</h2>
+      <h2 id="experience" className="section__title">Experience</h2>
       <div className="experience-list">
         {experience.map((item, i) => (
           <ExperienceItem key={i} item={item} />
@@ -389,9 +389,9 @@ function CertificationRow({ cert }) {
 function CertificationsSection({ certifications }) {
   if (!certifications || certifications.length === 0) return null;
   return (
-    <section id="certifications" className="section">
+    <section className="section">
       <p className="eyebrow">{'// certifications'}</p>
-      <h2 className="section__title">Certifications</h2>
+      <h2 id="certifications" className="section__title">Certifications</h2>
       <div className="cert-list">
         {certifications.map((c, i) => (
           <CertificationRow key={i} cert={c} />
@@ -448,9 +448,9 @@ function ContactSection({ contact }) {
   };
 
   return (
-    <section id="contact" className="section">
+    <section className="section">
       <p className="eyebrow">{'// contact'}</p>
-      <h2 className="section__title">Contact</h2>
+      <h2 id="contact" className="section__title">Contact</h2>
       <div className="contact-grid">
         <div className="contact-info">
           {contact.socials?.length > 0 && (
@@ -601,16 +601,8 @@ function ChatMessageContent({ role, content }) {
   );
 }
 
-const TEXT_UNITS = /(\s+|[^\s]+)/g;
-
-function splitTextUnits(text) {
-  if (!text) return [];
-  return text.match(TEXT_UNITS) || [];
-}
-
-function StreamingText({ text }) {
+function StreamingText({ units }) {
   const prevCountRef = useRef(0);
-  const units = useMemo(() => splitTextUnits(text), [text]);
   const animateFrom = prevCountRef.current;
 
   useLayoutEffect(() => {
@@ -628,7 +620,7 @@ function StreamingText({ text }) {
   );
 }
 
-function StreamingMessage({ content, displayedText, isComplete }) {
+function StreamingMessage({ content, displayUnits, isComplete }) {
   const [showMarkdown, setShowMarkdown] = useState(false);
 
   useEffect(() => {
@@ -644,7 +636,38 @@ function StreamingMessage({ content, displayedText, isComplete }) {
     return <ChatMessageContent role="assistant" content={content} />;
   }
 
-  return <StreamingText text={displayedText} />;
+  return <StreamingText units={displayUnits} />;
+}
+
+function scrollToSection(hash) {
+  const id = hash.replace(/^#/, '');
+  const target = document.getElementById(id);
+  if (target) {
+    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+}
+
+function ChatSectionLinks({ links, onNavigate }) {
+  if (!links?.length) return null;
+
+  return (
+    <nav className="chat-section-links" aria-label="Jump to portfolio sections">
+      {links.map((link) => (
+        <a
+          key={link.intent}
+          href={link.href}
+          className="chat-section-link"
+          onClick={(e) => {
+            e.preventDefault();
+            scrollToSection(link.href);
+            onNavigate?.();
+          }}
+        >
+          {link.label}
+        </a>
+      ))}
+    </nav>
+  );
 }
 
 async function readChatStream(response, { onDelta, onDone, signal }) {
@@ -692,7 +715,7 @@ async function readChatStream(response, { onDelta, onDone, signal }) {
         }
 
         if (data.done) {
-          onDone?.({ reply: data.reply, suggestions: data.suggestions || [] });
+          onDone?.({ reply: data.reply, links: data.links || [] });
         }
       }
     }
@@ -719,11 +742,12 @@ function ChatWidget({ config, name, variant = 'floating' }) {
     enqueue,
     reset: resetStream,
     displayedText,
+    displayUnits,
     isStreaming,
     isDraining,
     finish,
-    suggestions,
-    setSuggestions,
+    sectionLinks,
+    setSectionLinks,
   } = useAdaptiveStream();
 
   useEffect(() => () => abortRef.current?.abort(), []);
@@ -769,7 +793,7 @@ function ChatWidget({ config, name, variant = 'floating' }) {
     if (!text || sending || isRateLimited) return;
 
     setSendError(null);
-    setSuggestions([]);
+    setSectionLinks([]);
     setStreamComplete(false);
     resetStream();
 
@@ -812,8 +836,8 @@ function ChatWidget({ config, name, variant = 'floating' }) {
 
       await readChatStream(res, {
         onDelta: enqueue,
-        onDone: ({ reply, suggestions: chips }) => {
-          finish(reply, chips, (finalReply) => {
+        onDone: ({ reply, links }) => {
+          finish(reply, links, (finalReply) => {
             setMessages((m) => {
               const next = [...m];
               next[next.length - 1] = {
@@ -860,7 +884,7 @@ function ChatWidget({ config, name, variant = 'floating' }) {
     enqueue,
     finish,
     resetStream,
-    setSuggestions,
+    setSectionLinks,
   ]);
 
   const handleKeyDown = (e) => {
@@ -869,11 +893,6 @@ function ChatWidget({ config, name, variant = 'floating' }) {
       send();
     }
     if (e.key === 'Escape' && !isInline) setOpen(false);
-  };
-
-  const handleChipClick = (chip) => {
-    setInput(chip);
-    setSuggestions([]);
   };
 
   if (!enabled) return null;
@@ -911,7 +930,7 @@ function ChatWidget({ config, name, variant = 'floating' }) {
               >
                 <StreamingMessage
                   content={m.content}
-                  displayedText={displayedText}
+                  displayUnits={displayUnits}
                   isComplete={streamComplete && !isDraining}
                 />
               </div>
@@ -935,19 +954,11 @@ function ChatWidget({ config, name, variant = 'floating' }) {
             <span />
           </div>
         )}
-        {suggestions.length > 0 && !isStreamActive && (
-          <div className="chat-suggestions" role="group" aria-label="Suggested questions">
-            {suggestions.map((chip) => (
-              <button
-                key={chip}
-                type="button"
-                className="chat-suggestion-chip"
-                onClick={() => handleChipClick(chip)}
-              >
-                {chip}
-              </button>
-            ))}
-          </div>
+        {sectionLinks.length > 0 && !isStreamActive && (
+          <ChatSectionLinks
+            links={sectionLinks}
+            onNavigate={!isInline ? () => setOpen(false) : undefined}
+          />
         )}
       </div>
 

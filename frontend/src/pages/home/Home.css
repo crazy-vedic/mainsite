@@ -116,6 +116,7 @@
   font-weight: 600;
   font-size: clamp(1.75rem, 3vw, 2.5rem);
   margin: 0 0 var(--space-4);
+  scroll-margin-top: var(--space-3);
 }
 
 /* ============================================================
@@ -736,7 +737,7 @@
   to { opacity: 1; transform: translateY(0); }
 }
 
-.chat-suggestions {
+.chat-section-links {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
@@ -745,22 +746,22 @@
   margin-top: 2px;
 }
 
-.chat-suggestion-chip {
+.chat-section-link {
   background: transparent;
   border: 1px solid var(--surface-border-hover);
   border-radius: 999px;
-  color: var(--text-muted);
-  cursor: pointer;
+  color: var(--accent);
   font-family: var(--font-body);
   font-size: 0.78rem;
   line-height: 1.2;
   padding: 5px 10px;
+  text-decoration: none;
   transition: border-color 150ms ease, color 150ms ease, background 150ms ease;
 }
 
-.chat-suggestion-chip:hover {
+.chat-section-link:hover {
   border-color: var(--accent);
-  color: var(--accent);
+  color: var(--text);
   background: var(--accent-soft);
 }
 
@@ -856,7 +857,7 @@
   .project-card,
   .hero__scroll,
   .chat-widget__toggle,
-  .chat-suggestion-chip {
+  .chat-section-link {
     transition: none !important;
   }
 }
