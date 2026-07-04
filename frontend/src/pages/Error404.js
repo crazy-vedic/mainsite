@@ -6,7 +6,7 @@ function Error404() {
 <div style={{width:"100%", height:0, paddingBottom:"60%", position:"relative"}}>
   <iframe 
     title='404'
-    src="https://giphy.com/embed/3o6wO10Qx9pfHx8kRG" 
+    src="https://tenor.com/bngVP.gif" 
     width="100%" 
     height="100%" 
     style={{position:"absolute"}} 
@@ -14,6 +14,7 @@ function Error404() {
     allowFullScreen>
   </iframe>
 </div>
+
 <a href="./">Find your way back to <b>home</b></a></div>
 )};
 
