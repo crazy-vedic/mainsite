@@ -31,13 +31,21 @@ function isDuplicateOfPrevious(reply, history) {
   return probe.length >= 40 && longer.includes(probe);
 }
 
+const UNIT_SPLIT = /(\s+|[^\s]+)/g;
+
 function streamText(text, onDelta) {
-  if (text && onDelta) onDelta(text);
+  if (!text || !onDelta) return;
+
+  const units = text.match(UNIT_SPLIT) || [];
+  for (const unit of units) {
+    onDelta(unit);
+  }
 }
 
 async function tryPolish(factsBundle, message, history, onDelta, signal) {
   const systemPrompt = buildPolishPrompt(factsBundle, message, history);
   let buffered = '';
+  let streamed = false;
 
   const polishPromise = streamPolish({
     systemPrompt,
@@ -45,6 +53,10 @@ async function tryPolish(factsBundle, message, history, onDelta, signal) {
     signal,
     onDelta: (delta) => {
       buffered += delta;
+      if (delta && onDelta) {
+        streamed = true;
+        onDelta(delta);
+      }
     },
   });
 
@@ -59,14 +71,17 @@ async function tryPolish(factsBundle, message, history, onDelta, signal) {
     const trimmed = buffered.trim();
 
     if (trimmed && isDuplicateOfPrevious(trimmed, history)) {
+      if (streamed) return trimmed;
       return null;
     }
 
-    if (trimmed && onDelta) onDelta(trimmed);
     return trimmed || null;
   } catch (err) {
     clearTimeout(timeoutId);
     if (err.name === 'AbortError' || signal?.aborted) throw err;
+
+    const trimmed = buffered.trim();
+    if (streamed && trimmed) return trimmed;
     return null;
   }
 }
@@ -129,8 +144,7 @@ async function resolveChatResponse({ message, content, history, signal, onDelta 
       onDelta: captureDelta,
     });
   } else {
-    streamText(fallback, onDelta);
-    reply = fallback;
+    streamText(fallback, captureDelta);
   }
 
   return {
