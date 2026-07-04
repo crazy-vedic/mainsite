@@ -10,7 +10,7 @@ const INTENT_PATTERNS = [
   { intent: 'identity', re: /\b(who are you|what are you)\b/i },
   {
     intent: 'experience',
-    re: /\b((work|job|career|professional)[\s-]*(experien[a-z]*|expiri[a-z]*|history|background)|experien[a-z]*|expiri[a-z]*|works?\b|work\s+history|internships?|employ(?:ment|ed)?|where\s+(?:has|did)\s+he\s+work|roles?\s+at)\b/i,
+    re: /\b((work|job|career|professional)[\s-]*(experien[a-z]*|expiri[a-z]*|history|background)|experien[a-z]*|expiri[a-z]*|works?\b|worked\s+for|work\s+history|internships?|employ(?:ment|ed)?|where\s+(?:has|did)\s+(?:he|vedic|\w+)\s+work|who\s+has\s+\w+\s+worked|roles?\s+at)\b/i,
   },
   { intent: 'certifications', re: /\b(certif|gate\s+qualified|ibm\s+data|google\s+cloud)\b/i },
   {
@@ -24,7 +24,7 @@ const INTENT_PATTERNS = [
   },
   {
     intent: 'about',
-    re: /\b(everything|who\s+is\s+vedic|introduce(?:\s+vedic|\s+him)?|about\s+vedic|about\s+him\b|tell\s+me\s+about\s+(?:vedic|him|himself|you)\b)\b/i,
+    re: /\b(everything|who\s+is\s+vedic|what\s+is\s+(?:a\s+)?vedic|introduce(?:\s+vedic|\s+him)?|about\s+vedic|about\s+him\b|tell\s+me\s+about\s+(?:vedic|him|himself|you)\b)\b/i,
   },
   {
     intent: 'about',

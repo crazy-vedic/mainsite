@@ -166,6 +166,8 @@ function gatherFacts(message, content, history, intent, modifiers = {}) {
 }
 
 function suggestSectionLinks(intent, content) {
+  if (!intent) return [];
+
   const SECTIONS = {
     experience: { label: 'Experience', href: '#experience' },
     projects: { label: 'Projects', href: '#projects' },

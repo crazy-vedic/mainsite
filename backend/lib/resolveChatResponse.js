@@ -14,21 +14,130 @@ function normalizeForCompare(text) {
     .trim();
 }
 
-function isDuplicateOfPrevious(reply, history) {
-  const last = [...(history || [])].reverse().find((t) => t.role === 'assistant');
-  if (!last?.content || !reply) return false;
+function getLastTurnPair(history) {
+  const turns = history || [];
+  let lastAssistant = null;
+  let precedingUser = null;
 
-  const current = normalizeForCompare(reply);
-  const previous = normalizeForCompare(last.content);
+  for (let i = turns.length - 1; i >= 0; i -= 1) {
+    if (!lastAssistant && turns[i].role === 'assistant') {
+      lastAssistant = turns[i];
+      continue;
+    }
+    if (lastAssistant && turns[i].role === 'user') {
+      precedingUser = turns[i];
+      break;
+    }
+  }
 
-  if (!current || !previous) return false;
-  if (current === previous) return true;
+  return { lastAssistant, precedingUser };
+}
 
-  const shorter = current.length <= previous.length ? current : previous;
-  const longer = current.length <= previous.length ? previous : current;
-  const probe = shorter.slice(0, Math.min(100, shorter.length));
+function normalizeQuestion(text) {
+  return normalizeForCompare(text)
+    .replace(/\b(vedic|varma|bro|please|tell me|about|his|her)\b/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
 
-  return probe.length >= 40 && longer.includes(probe);
+function questionsAreSimilar(current, previous) {
+  const a = normalizeQuestion(current);
+  const b = normalizeQuestion(previous);
+  if (!a || !b) return false;
+  if (a === b) return true;
+
+  const shorter = a.length <= b.length ? a : b;
+  const longer = a.length <= b.length ? b : a;
+  return shorter.length >= 8 && longer.includes(shorter);
+}
+
+function replySimilarity(current, previous) {
+  const a = normalizeForCompare(current);
+  const b = normalizeForCompare(previous);
+  if (!a || !b) return 0;
+  if (a === b) return 1;
+
+  const shorter = a.length <= b.length ? a : b;
+  const longer = a.length <= b.length ? b : a;
+
+  if (shorter.length >= 40 && longer.includes(shorter)) {
+    return shorter.length / longer.length;
+  }
+
+  const wordsA = new Set(a.split(' ').filter((w) => w.length > 3));
+  const wordsB = new Set(b.split(' ').filter((w) => w.length > 3));
+  if (!wordsA.size || !wordsB.size) return 0;
+
+  let overlap = 0;
+  for (const word of wordsA) {
+    if (wordsB.has(word)) overlap += 1;
+  }
+
+  return overlap / Math.max(wordsA.size, wordsB.size);
+}
+
+function isDuplicateOfPrevious(reply, message, history, content) {
+  const { lastAssistant, precedingUser } = getLastTurnPair(history);
+  if (!lastAssistant?.content || !reply) {
+    return { duplicate: false, reason: 'no_previous_reply' };
+  }
+
+  const previousReply = lastAssistant.content;
+  const previousUserMessage = precedingUser?.content || '';
+
+  if (normalizeForCompare(reply) === normalizeForCompare(previousReply)) {
+    return {
+      duplicate: true,
+      reason: 'exact_match',
+      currentUserMessage: message,
+      previousUserMessage,
+      currentReplyPreview: reply.slice(0, 160),
+      previousReplyPreview: previousReply.slice(0, 160),
+    };
+  }
+
+  const currentIntent = detectIntent(message, content);
+  const previousIntent = detectIntent(previousUserMessage, content);
+  const reasked = questionsAreSimilar(message, previousUserMessage);
+  const sameIntent = Boolean(currentIntent && previousIntent && currentIntent === previousIntent);
+
+  if (!reasked && !sameIntent) {
+    return {
+      duplicate: false,
+      reason: 'different_topic',
+      currentIntent,
+      previousIntent,
+      currentUserMessage: message,
+      previousUserMessage,
+    };
+  }
+
+  const similarity = replySimilarity(reply, previousReply);
+  if (similarity >= 0.72) {
+    return {
+      duplicate: true,
+      reason: 'high_similarity',
+      similarity: Number(similarity.toFixed(3)),
+      reasked,
+      sameIntent,
+      currentIntent,
+      previousIntent,
+      currentUserMessage: message,
+      previousUserMessage,
+      currentReplyPreview: reply.slice(0, 160),
+      previousReplyPreview: previousReply.slice(0, 160),
+    };
+  }
+
+  return {
+    duplicate: false,
+    reason: 'similar_question_different_answer',
+    similarity: Number(similarity.toFixed(3)),
+    reasked,
+    sameIntent,
+    currentIntent,
+    previousIntent,
+  };
 }
 
 const GENERIC_REPLY_RE =
@@ -111,8 +220,9 @@ async function tryPolish(factsBundle, message, history, onDelta, signal) {
       return null;
     }
 
-    if (isDuplicateOfPrevious(trimmed, history)) {
-      console.log('[polish] rejected: duplicate of previous reply');
+    const duplicateCheck = isDuplicateOfPrevious(trimmed, message, history, content);
+    if (duplicateCheck.duplicate) {
+      console.log('[polish] rejected: duplicate of previous reply', duplicateCheck);
       return null;
     }
 
@@ -153,7 +263,7 @@ async function resolveChatResponse({ message, content, history, signal, onDelta 
 
     return {
       reply: reply.trim(),
-      links: suggestSectionLinks(null, content),
+      links: [],
       source: 'llm',
     };
   }
