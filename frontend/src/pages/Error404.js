@@ -1,21 +1,29 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 
-function Error404() {
+const Error404 = () => {
+  useEffect(() => {
+    const prevBody = document.body.style.overflow;
+    const prevHtml = document.documentElement.style.overflow;
+    document.body.style.overflow = 'hidden';
+    document.documentElement.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = prevBody;
+      document.documentElement.style.overflow = prevHtml;
+    };
+  }, []);
+
   return (
-    <div>
-<div style={{width:"100%", height:0, paddingBottom:"60%", position:"relative"}}>
-  <iframe 
-    title='404'
-    src="https://tenor.com/bngVP.gif" 
-    width="100%" 
-    height="100%" 
-    style={{position:"absolute"}} 
-    className="giphy-embed" 
-    allowFullScreen>
-  </iframe>
-</div>
-
-<a href="./">Find your way back to <b>home</b></a></div>
-)};
+    <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', overflow: 'hidden' }}>
+      <iframe
+        src="https://tenor.com/embed/17900619"
+        allowFullScreen
+        title="Confused John Travolta GIF"
+        scrolling="no"
+        frameBorder="0"
+        style={{ width: '100%', height: '100%', border: 'none', overflow: 'hidden' }}
+      />
+    </div>
+  );
+};
 
 export default Error404;
