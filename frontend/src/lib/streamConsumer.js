@@ -166,6 +166,8 @@ export function useAdaptiveStream() {
 
       if (links?.length) {
         setSectionLinks(links);
+      } else {
+        setSectionLinks([]);
       }
 
       if (!pendingRef.current && queueRef.current.length === 0 && !timerRef.current) {

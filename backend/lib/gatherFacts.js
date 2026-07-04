@@ -176,30 +176,30 @@ function suggestSectionLinks(intent, content) {
     contact: { label: 'Contact', href: '#contact' },
   };
 
-  const available = [];
-  if (content.experience?.length) available.push('experience');
-  if (content.projects?.length) available.push('projects');
-  if (content.skills?.length) available.push('skills');
-  if (content.certifications?.length) available.push('certifications');
-  if (content.contact) available.push('contact');
-
-  const relatedByIntent = {
-    about: ['experience', 'projects', 'skills'],
-    experience: ['experience', 'projects', 'skills'],
-    projects: ['projects', 'experience', 'skills'],
-    skills: ['skills', 'projects', 'experience'],
-    certifications: ['certifications', 'skills', 'experience'],
-    contact: ['contact', 'projects', 'experience'],
-    identity: ['experience', 'projects', 'skills'],
+  const sectionAvailable = (key) => {
+    if (key === 'contact') return Boolean(content.contact);
+    return (content[key] || []).length > 0;
   };
 
-  const preferred = relatedByIntent[intent] || ['projects', 'experience', 'skills'];
+  const toLink = (key) => (sectionAvailable(key) ? [{ intent: key, ...SECTIONS[key] }] : []);
 
-  const seen = new Set();
-  return preferred
-    .filter((key) => available.includes(key) && !seen.has(key) && seen.add(key))
-    .slice(0, 4)
-    .map((key) => ({ intent: key, ...SECTIONS[key] }));
+  // Broad overview — offer a few places to explore on the page.
+  if (intent === 'about') {
+    const preferred = ['experience', 'projects', 'skills'];
+    const seen = new Set();
+    return preferred
+      .filter((key) => sectionAvailable(key) && !seen.has(key) && seen.add(key))
+      .slice(0, 3)
+      .map((key) => ({ intent: key, ...SECTIONS[key] }));
+  }
+
+  // Other section intents — only link when the chat answer is a summary
+  // and the user may want to browse the full section on the page.
+  if (intent === 'projects' || intent === 'contact') {
+    return toLink(intent);
+  }
+
+  return [];
 }
 
 module.exports = {

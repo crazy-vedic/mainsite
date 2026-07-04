@@ -225,7 +225,7 @@ function streamText(text, onDelta) {
 async function tryPolish(factsBundle, message, history, content, onDelta, signal) {
   const { systemPrompt, userMessage } = buildPolishPrompt(factsBundle, message, history);
   const factCount = factsBundle?.facts?.length || 0;
-  const maxTokens = Math.min(350, 120 + factCount * 45);
+  const maxTokens = Math.min(400, 120 + factCount * 60);
   let buffered = '';
 
   const polishPromise = streamPolish({
