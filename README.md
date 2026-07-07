@@ -1,6 +1,6 @@
 # vedicvarma.com — Portfolio Site
 
-A data-driven portfolio site for Vedic Varma. All site content lives in `/content` as JSON files, served by Express via `GET /api/content`. The React frontend fetches that API and renders the home page dynamically — no rebuild needed to update projects, skills, experience, or certifications.
+A data-driven portfolio site for Vedic Varma. All site content lives in `/content` as JSON files. The Next.js frontend reads those files server-side and renders the home page with SSG + ISR, while Express serves the `/api/content` and `/api/chat` endpoints on an internal API port.
 
 An optional AI chat widget (`POST /api/chat`) answers questions about Vedic using a self-hosted LLM (Ollama-compatible by default).
 
@@ -10,10 +10,10 @@ An optional AI chat widget (`POST /api/chat`) answers questions about Vedic usin
 # Install dependencies (root + frontend)
 npm install
 
-# Build the React frontend
+# Build the Next.js frontend
 npm run build
 
-# Start the server (default port 3000)
+# Start Next.js + Express
 npm start
 ```
 
@@ -21,17 +21,14 @@ Open [http://localhost:3000](http://localhost:3000).
 
 ### Local development with hot reload
 
-Run the Express server and CRA dev server in separate terminals:
+Run Next.js and Express together:
 
 ```bash
-# Terminal 1 — API + production build (or rebuild after changes)
-npm start
-
-# Terminal 2 — React dev server with proxy to :3000
-npm run dev:frontend
+# Next.js on :3000, Express API on :3001
+npm run dev
 ```
 
-The CRA dev server proxies `/api/*` requests to `http://localhost:3000` (configured in `frontend/package.json`).
+Next.js rewrites `/api/*` requests to the internal Express server on `http://localhost:3001`.
 
 ## Editing site content
 
@@ -47,7 +44,7 @@ All content is in the `/content` folder:
 | `contact.json` | Email, Formspree endpoint, social links, footer text |
 | `siteConfig.json` | Chat widget copy and `chat.enabled` toggle |
 
-After editing any JSON file, refresh the page — changes appear immediately with no server restart.
+After editing any JSON file, refresh the page. In development the change is immediate; in production ISR republishes the rendered HTML within roughly 60 seconds.
 
 ### Project media
 
@@ -74,7 +71,9 @@ Set `siteConfig.json` → `chat.enabled` to `false` to hide the widget without t
 Configure the LLM in `.env` (copy from `.env.example`):
 
 ```
-PORT=3000
+PORT=3001
+API_ORIGIN=http://localhost:3001
+SITE_URL=https://vedicvarma.com
 LLM_API_URL=http://localhost:11434
 LLM_MODEL=llama3.1
 LLM_API_KEY=
@@ -92,15 +91,17 @@ backend/
   lib/             contentStore, buildSystemPrompt, llmClient
   routes/          /api/content, /api/chat
 frontend/
+  app/             Next App Router pages and layout
+  components/      Shared client components such as Navbar
+  home/            Home page sections and interactive client pieces
+  chat/            Chat widget and SSE helpers
   public/assets/   Static images, videos, resume.pdf
-  src/
-    App.js         Router + Navbar
-    pages/home/    Data-driven Home page
-index.js           Express server entrypoint
+index.js           Express API entrypoint
 ```
 
 ## Production deployment
 
-1. Set `PORT` in `.env` (or use your process manager / reverse proxy).
+1. Set `PORT=3001`, `API_ORIGIN`, and `SITE_URL` in `.env`.
 2. Run `npm run build` then `npm start`.
-3. Point your reverse proxy (nginx, Caddy, etc.) at the Node process for TLS termination.
+3. Point your reverse proxy (nginx, Caddy, etc.) at the Next.js process on port `3000`.
+4. Keep Express on port `3001` internal only; Next proxies `/api/*` to it.

@@ -3,12 +3,17 @@
   "version": "2.0.0",
   "private": true,
   "scripts": {
-    "start": "node index.js",
+    "dev": "concurrently \"npm run dev:api\" \"npm run dev:web\"",
+    "dev:api": "PORT=3001 node index.js",
+    "dev:web": "npm run dev --prefix frontend",
     "build": "npm run build --prefix frontend",
-    "dev:frontend": "npm start --prefix frontend",
+    "start": "concurrently \"npm run start:api\" \"npm run start:web\"",
+    "start:api": "PORT=3001 node index.js",
+    "start:web": "npm run start --prefix frontend",
     "postinstall": "npm install --prefix frontend"
   },
   "dependencies": {
+    "concurrently": "^9.2.0",
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",

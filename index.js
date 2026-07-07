@@ -2,11 +2,10 @@
 
 const express = require('express');
 const cors = require('cors');
-const path = require('path');
 const http = require('http');
 
 const app = express();
-const port = parseInt(process.env.PORT, 10) || 3000;
+const port = parseInt(process.env.PORT, 10) || 3001;
 const morgan = require('morgan');
 
 app.use(cors());
@@ -16,12 +15,6 @@ app.set('trust proxy', 1);
 app.use('/api/content', require('./backend/routes/content'));
 app.use('/api/chat', require('./backend/routes/chat'));
 app.use(morgan('dev'));
-
-app.use(express.static(path.join(__dirname, 'frontend', 'build')));
-
-app.get('/{*splat}', (req, res) => {
-  res.sendFile(path.join(__dirname, 'frontend', 'build', 'index.html'));
-});
 
 const server = http.createServer(app);
 

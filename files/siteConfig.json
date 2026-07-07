@@ -1,8 +1,0 @@
-{
-  "chat": {
-    "enabled": true,
-    "title": "Ask about Vedic",
-    "greeting": "Hi! I'm an AI assistant that knows Vedic's projects, skills, and experience. Ask me anything about his work.",
-    "placeholder": "Ask something…"
-  }
-}

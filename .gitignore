@@ -1,4 +1,6 @@
 frontend/build/
 frontend/node_modules/
+.next/
+frontend/.next/
 .env
 node_modules/

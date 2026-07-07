@@ -1,0 +1,12 @@
+# Vedic Varma - Portfolio
+
+> Portfolio, projects, experience, resume, and contact details for Vedic Varma.
+
+## Key pages
+- Home: https://vedicvarma.com/
+- Resume page: https://vedicvarma.com/resume
+- Resume PDF: https://vedicvarma.com/resume.pdf
+- Structured content API: https://vedicvarma.com/api/content
+
+## About
+Vedic Varma is a developer whose site highlights projects, skills, certifications, experience, and contact details.
