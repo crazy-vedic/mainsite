@@ -222,6 +222,48 @@ function streamText(text, onDelta) {
   if (text && onDelta) onDelta(text);
 }
 
+function logPolishMetrics(trimmed, factsBundle, message, history, content, { maxTokens, error } = {}) {
+  const preview = {
+    intent: factsBundle?.intent,
+    maxTokens,
+  };
+
+  if (trimmed) {
+    preview.reply = trimmed.slice(0, 120);
+  }
+
+  if (error) {
+    console.log('[polish] stream ended with error (using streamed content if any)', {
+      error: error.message || String(error),
+      partialLength: trimmed.length,
+      ...preview,
+    });
+    return;
+  }
+
+  if (!trimmed) {
+    console.log('[polish] rejected: empty response', preview);
+    return;
+  }
+
+  if (isWeakPolishReply(trimmed, factsBundle)) {
+    const reason = looksTruncated(trimmed) ? 'truncated (hit token limit)' : 'generic or missing facts';
+    console.log(`[polish] rejected (streamed anyway): ${reason}`, preview);
+    return;
+  }
+
+  const duplicateCheck = isDuplicateOfPrevious(trimmed, message, history, content);
+  if (duplicateCheck.duplicate) {
+    console.log('[polish] rejected (streamed anyway): duplicate of previous reply', {
+      ...duplicateCheck,
+      ...preview,
+    });
+    return;
+  }
+
+  console.log('[polish] accepted', preview);
+}
+
 async function tryPolish(factsBundle, message, history, content, onDelta, signal) {
   const { systemPrompt, userMessage } = buildPolishPrompt(factsBundle, message, history);
   const factCount = factsBundle?.facts?.length || 0;
@@ -235,6 +277,7 @@ async function tryPolish(factsBundle, message, history, content, onDelta, signal
     signal,
     onDelta: (delta) => {
       buffered += delta;
+      if (onDelta) onDelta(delta);
     },
   });
 
@@ -248,32 +291,15 @@ async function tryPolish(factsBundle, message, history, content, onDelta, signal
     clearTimeout(timeoutId);
     const trimmed = buffered.trim();
 
-    if (!trimmed) {
-      console.log('[polish] rejected: empty response');
-      return null;
-    }
-
-    if (isWeakPolishReply(trimmed, factsBundle)) {
-      const reason = looksTruncated(trimmed) ? 'truncated (hit token limit)' : 'generic or missing facts';
-      console.log(`[polish] rejected: ${reason}`, { reply: trimmed.slice(0, 120), maxTokens });
-      return null;
-    }
-
-    const duplicateCheck = isDuplicateOfPrevious(trimmed, message, history, content);
-    if (duplicateCheck.duplicate) {
-      console.log('[polish] rejected: duplicate of previous reply', duplicateCheck);
-      return null;
-    }
-
-    console.log('[polish] accepted', { intent: factsBundle.intent, reply: trimmed.slice(0, 120) });
-    if (onDelta) streamText(trimmed, onDelta);
-    return trimmed;
+    logPolishMetrics(trimmed, factsBundle, message, history, content, { maxTokens });
+    return trimmed || null;
   } catch (err) {
     clearTimeout(timeoutId);
     if (err.name === 'AbortError' || signal?.aborted) throw err;
 
-    console.log('[polish] rejected:', err.message);
-    return null;
+    const trimmed = buffered.trim();
+    logPolishMetrics(trimmed, factsBundle, message, history, content, { maxTokens, error: err });
+    return trimmed || null;
   }
 }
 
