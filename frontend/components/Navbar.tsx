@@ -34,6 +34,8 @@ function SectionLink({ to, children }: SectionLinkProps) {
 }
 
 export default function Navbar() {
+  const pathname = usePathname();
+
   return (
     <nav className="site-nav">
       <ul className="site-nav__menu">
@@ -44,6 +46,11 @@ export default function Navbar() {
         </li>
         <li className="site-nav__item">
           <SectionLink to="/#projects">Portfolio</SectionLink>
+        </li>
+        <li className="site-nav__item">
+          <Link href="/console" aria-current={pathname === '/console' ? 'page' : undefined}>
+            Console
+          </Link>
         </li>
         <li className="site-nav__item">
           <Link href="/resume">Resume</Link>

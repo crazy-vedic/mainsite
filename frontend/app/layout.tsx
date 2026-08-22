@@ -32,8 +32,12 @@ type RootLayoutProps = {
 
 export default function RootLayout({ children }: RootLayoutProps) {
   return (
-    <html lang="en" className={`${fraunces.variable} ${ibmPlexSans.variable} ${ibmPlexMono.variable}`}>
-      <body style={{ margin: 0 }}>
+    <html
+      lang="en"
+      className={`${fraunces.variable} ${ibmPlexSans.variable} ${ibmPlexMono.variable}`}
+      style={{ background: '#0b0d10' }}
+    >
+      <body style={{ margin: 0, background: '#0b0d10' }}>
         <Navbar />
         {children}
       </body>

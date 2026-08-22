@@ -4,6 +4,7 @@
 
 ## Key pages
 - Home: https://vedicvarma.com/
+- Console: https://vedicvarma.com/console
 - Resume page: https://vedicvarma.com/resume
 - Resume PDF: https://vedicvarma.com/resume.pdf
 - Structured content API: https://vedicvarma.com/api/content

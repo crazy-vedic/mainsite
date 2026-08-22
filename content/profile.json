@@ -5,6 +5,7 @@
   "resumeUrl": "/resume.pdf",
   "nav": [
     { "label": "Portfolio", "href": "#projects" },
+    { "label": "Console", "href": "/console" },
     { "label": "Resume", "href": "/resume" },
     { "label": "Contact", "href": "#contact" }
   ]
